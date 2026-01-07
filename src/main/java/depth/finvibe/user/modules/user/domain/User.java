@@ -1,10 +1,13 @@
 package depth.finvibe.user.modules.user.domain;
 
+import depth.finvibe.user.modules.user.domain.enums.UserRole;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,10 +32,19 @@ public class User {
     private Email email;
 
     @Embedded
+    @AttributeOverride(name = "value", column = @Column(name = "login_id", nullable = true))
     private LoginId loginId;
 
     @Embedded
+    @AttributeOverride(name = "passwordHash", column = @Column(name = "password_hash", nullable = true))
     private PasswordHash passwordHash;
+
+    @Embedded
+    private OAuthInfo oAuthInfo;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserRole role;
 
     @Column(nullable = false)
     private LocalDate birthDate;
