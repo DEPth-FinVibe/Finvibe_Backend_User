@@ -1,6 +1,9 @@
 package depth.finvibe.user.modules.user.domain;
 
+import depth.finvibe.user.modules.user.domain.enums.UserRole;
+import depth.finvibe.user.modules.user.domain.error.UserErrorCode;
 import depth.finvibe.user.shared.domain.TimeStampedBaseEntity;
+import depth.finvibe.user.shared.error.DomainException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -38,5 +41,17 @@ public class InterestStock extends TimeStampedBaseEntity {
                 .stockId(stockId)
                 .stockName(stockName)
                 .build();
+    }
+
+    public void validateCreatable(UUID requesterId, UserRole role) {
+        if (!this.userId.equals(requesterId) && role != UserRole.ADMIN) {
+            throw new DomainException(UserErrorCode.UNAUTHORIZED_INTEREST_STOCK_CREATION);
+        }
+    }
+
+    public void validateDeletable(UUID requesterId, UserRole role) {
+        if (!this.userId.equals(requesterId) && role != UserRole.ADMIN) {
+            throw new DomainException(UserErrorCode.UNAUTHORIZED_INTEREST_STOCK_DELETION);
+        }
     }
 }
