@@ -6,6 +6,7 @@ import depth.finvibe.user.modules.user.domain.vo.LoginId;
 import depth.finvibe.user.modules.user.domain.vo.OAuthInfo;
 import depth.finvibe.user.modules.user.domain.vo.PasswordHash;
 import depth.finvibe.user.modules.user.domain.vo.PhoneNumber;
+import depth.finvibe.user.shared.domain.TimeStampedBaseEntity;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
@@ -28,7 +29,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Getter
 @SuperBuilder
-public class User {
+public class User extends TimeStampedBaseEntity {
     @Id
     @Builder.Default
     private UUID id = UUID.randomUUID();
