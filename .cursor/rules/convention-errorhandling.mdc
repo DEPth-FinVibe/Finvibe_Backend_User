@@ -1,0 +1,139 @@
+---
+description: 에러 핸들링 컨벤션
+alwaysApply: false
+---
+오류 처리 컨벤션 (Project-wide)
+
+이 문서는 modules/wallet과 .cursor/rules/convention-errorhandling.mdc를 기준으로, 프로젝트 공통 오류 처리 규칙을 정의합니다.
+
+1. 목표/원칙
+
+도메인 순수성 유지: domain/application은 HTTP/전송 프로토콜을 모릅니다.
+
+표현 계층 단일 책임화: HTTP 상태코드/응답 포맷은 shared.infra.error에서 일괄 처리합니다.
+
+모듈 확장 용이: 새 모듈/새 에러 코드 추가 시, 공용 코드 변경 없이 “모듈 매퍼 추가”만으로 확장합니다.
+
+2. 계층별 책임
+
+domain
+
+비즈니스 규칙 위반 시 DomainException만 발생
+
+에러 원인은 모듈의 *ErrorCode(=DomainErrorCode 구현)로 표현
+
+application
+
+트랜잭션/유스케이스 조립
+
+예외를 다른 타입으로 “변환”하지 않습니다(그대로 전파)
+
+api/infra
+
+DomainException을 HTTP 응답으로 변환하는 책임은 shared.infra.error에 위임
+
+모듈별 HTTP 상태 정책은 modules/{module}/infra/error/*ErrorHttpMapper에서 관리
+
+3. 공통 구성요소(계약)
+
+DomainErrorCode (shared.error.DomainErrorCode)
+
+code: 에러 식별자(예: WALLET_NOT_FOUND)
+
+messageKey: i18n 메시지 키(예: error.wallet.not_found)
+
+DomainException (shared.error.DomainException)
+
+도메인 규칙 위반의 최상위 예외(RuntimeException)
+
+내부에 DomainErrorCode errorCode를 포함
+
+ErrorResponse (shared.infra.error.ErrorResponse)
+
+공통 응답 포맷: { code, messageKey }
+
+DomainErrorHttpMapper (shared.infra.error.DomainErrorHttpMapper)
+
+모듈별 에러코드 → HTTP 상태 코드 매핑 계약
+
+GlobalExceptionHandler (shared.infra.error.GlobalExceptionHandler)
+
+@RestControllerAdvice로 DomainException을 캐치
+
+등록된 DomainErrorHttpMapper 목록에서 supports(code)가 true인 매퍼를 찾고 상태코드 결정
+
+매퍼가 없으면 500 Internal Server Error로 처리(확장 포인트 누락을 빠르게 드러냄)
+
+4. 예외 변환 흐름(표준)
+
+domain/application에서 DomainException 발생  
+
+GlobalExceptionHandler가 캐치  
+
+DomainErrorHttpMapper.supports(code)가 true인 매퍼 탐색  
+
+toStatus(code)로 HTTP Status 결정  
+
+ErrorResponse(code, messageKey)로 응답
+
+5. 모듈별 에러 추가 규칙 (Checklist)
+
+새 모듈(또는 기존 모듈 확장)에서 에러를 추가할 때는 아래를 따릅니다.
+
+(1) 도메인 에러 코드 enum 추가
+
+위치: modules/{module}/domain/error/{Module}ErrorCode
+
+DomainErrorCode 구현 + (code, messageKey) 보유
+
+(2) 규칙 위반 지점에서 DomainException 발생
+
+예: 입력값이 null/범위 위반/리소스 없음/잔액 부족 등
+
+(3) HTTP 매퍼 추가
+
+위치: modules/{module}/infra/error/{Module}ErrorHttpMapper
+
+supports: code instanceof {Module}ErrorCode
+
+toStatus: switch로 상태 코드 정책 중앙화
+
+6. HTTP 상태코드 매핑 가이드(권장)
+
+wallet 모듈 패턴을 기준으로, 아래 매핑을 기본 정책으로 권장합니다.
+
+404 NOT_FOUND
+
+리소스가 존재하지 않는 경우(예: *_NOT_FOUND)
+
+400 BAD_REQUEST
+
+입력값이 유효하지 않음(예: INVALID_*)
+
+비즈니스 규칙 위반이지만 “클라이언트 요청 수정”으로 해결 가능한 경우(예: INSUFFICIENT_*)
+
+500 INTERNAL_SERVER_ERROR
+
+매퍼 누락/예상하지 못한 에러(기본 폴백)
+
+7. 메시지 키(messageKey) 규칙
+
+접두사는 error.{module}. 형태로 통일합니다.
+
+예: error.wallet.not_found
+
+실제 사용자 메시지 문자열은 i18n 리소스(예: messages_*.properties)에서 관리합니다.
+
+8. 테스트 포인트(권장)
+
+도메인 단위 테스트
+
+규칙 위반 시 DomainException과 errorCode를 검증
+
+유스케이스 단위 테스트
+
+Repository mock + 예외 코드 검증
+
+(추가 권장) API/통합 테스트
+
+DomainException → 기대 HTTP status + ErrorResponse(code, messageKey) 변환을 검증

@@ -1,0 +1,121 @@
+---
+description: 패키지 구조 컨벤션
+alwaysApply: false
+---
+아키텍처/패키지 컨벤션 (Project-wide)
+
+이 문서는 modules/wallet 모듈 구조 및 .cursor/rules/convention-package.mdc 내용을 기준으로, 프로젝트 전체의 패키지/레이어 구조 규칙을 정의합니다.
+
+1. 최상위 패키지 구조
+
+기본 루트: depth.finvibe.investment
+
+boot/: 애플리케이션 부트스트랩/설정/DI 조립
+
+shared/: 전역 공통(정말 최소) - 시간/베이스 엔티티/에러/공통 인프라 계약 등
+
+modules/: 도메인 모듈(BC; Bounded Context)들
+
+2. 모듈 내부 레이어 구조
+
+각 모듈은 아래 레이어를 기준으로 구성합니다(필요한 것만 생성).
+
+modules/{module}/domain
+
+엔티티/값 객체/도메인 서비스/도메인 규칙
+
+(개발 편의상) JPA 엔티티로 직접 설계하는 것을 허용
+
+modules/{module}/application
+
+유스케이스 조립, 트랜잭션 경계, 오케스트레이션
+
+외부 의존성은 포트(인터페이스)로 역전
+
+권장 하위 구조:
+
+application/port/in: 유스케이스 입력 포트(예: *CommandUseCase, *QueryUseCase)
+
+application/port/out: 외부 시스템/영속성 포트(프로젝트 성장 시 도입 권장)
+
+modules/{module}/infra
+
+기술 구현체(영속성, 메시징, 외부 API 클라이언트 등)
+
+예:
+
+infra/persistence: Repository 구현, JPA 리포지토리
+
+infra/messaging: Kafka consumer/producer, 이벤트 DTO
+
+infra/error: 모듈 에러 → HTTP 매핑 구현체
+
+modules/{module}/api (현재 wallet에는 없지만 원칙상 허용/권장)
+
+REST 컨트롤러, 요청/응답 DTO, 외부 계약(HTTP/gRPC/Message handler 등)
+
+도메인 모델 직접 노출 금지
+
+modules/{module}/dto
+
+모듈 외부로 나가는 응답/계약 DTO(필요 시)
+
+3. 의존성 규칙 (가장 중요)
+
+3.1 레이어 간 의존 방향
+
+허용 방향
+
+api -> application
+
+application -> domain
+
+infra -> application (port 구현을 위해)
+
+domain/application -> shared (공통 계약/에러/기반 타입만)
+
+금지/지양
+
+domain -> application/api/infra
+
+application -> infra (Spring Data, Kafka 등 기술 구현에 직접 의존 금지)
+
+3.2 모듈 간 의존
+
+원칙: 다른 모듈의 domain 직접 import 금지
+
+모듈 A가 모듈 B 기능을 사용해야 한다면:
+
+B가 api 또는 “내부용 계약 패키지”(예: api/internal)로 인터페이스/DTO를 공개
+
+A는 그 계약에만 의존
+
+shared는 “최소 공통”만 허용
+
+OK: DomainException, DomainErrorCode, 공통 베이스 엔티티/시간 등
+
+주의: 비즈니스 의미가 강한 도메인 객체(예: User, Money 등)를 shared로 올리기 전 팀 합의 필요
+
+4. Port & Adapter 네이밍/배치 규칙
+
+입력 포트(UseCase): application/port/in/*UseCase
+
+출력 포트(Repository 등): application/*Repository (또는 application/port/out로 이동 가능)
+
+어댑터 구현체
+
+persistence 구현: infra/persistence/*RepositoryImpl
+
+messaging 구현: infra/messaging/*Consumer, *Producer
+
+5. 영속성/DB 설계 규칙
+
+각 모듈의 영속성은 모듈 내부 infra.persistence에 캡슐화
+
+모듈 간 테이블을 JPA 연관관계로 직접 엮지 않기
+
+다른 모듈 데이터가 필요하면:
+
+(1) 모듈 내부 API(계약)로 조회
+
+(2) 필요 시 CQRS read-model/view 도입
