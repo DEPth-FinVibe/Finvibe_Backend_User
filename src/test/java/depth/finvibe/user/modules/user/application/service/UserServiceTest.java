@@ -282,8 +282,10 @@ class UserServiceTest {
       InterestStock interestStock = InterestStock.create(userId, stockId, stockName);
       given(interestStockRepository.save(any(InterestStock.class))).willReturn(interestStock);
 
+      Requester requester = new Requester(userId, UserRole.USER);
+
       // when
-      UserDto.FavoriteStockResponse response = userService.addFavoriteStock(userId, stockId);
+      UserDto.FavoriteStockResponse response = userService.addFavoriteStock(userId, stockId, requester);
 
       // then
       assertThat(response.getStockId()).isEqualTo(stockId);
@@ -300,8 +302,10 @@ class UserServiceTest {
       given(interestStockRepository.findByUserIdAndStockId(userId, stockId))
           .willReturn(Optional.of(InterestStock.create(userId, stockId, "Samsung")));
 
+      Requester requester = new Requester(userId, UserRole.USER);
+
       // when & then
-      assertThatThrownBy(() -> userService.addFavoriteStock(userId, stockId))
+      assertThatThrownBy(() -> userService.addFavoriteStock(userId, stockId, requester))
           .isInstanceOf(DomainException.class)
           .extracting("errorCode")
           .isEqualTo(UserErrorCode.INTEREST_STOCK_ALREADY_EXISTS);
@@ -316,8 +320,10 @@ class UserServiceTest {
       given(interestStockRepository.findByUserIdAndStockId(userId, stockId)).willReturn(Optional.empty());
       given(marketClient.getStockNameByStockId(stockId)).willReturn(Optional.empty());
 
+      Requester requester = new Requester(userId, UserRole.USER);
+
       // when & then
-      assertThatThrownBy(() -> userService.addFavoriteStock(userId, stockId))
+      assertThatThrownBy(() -> userService.addFavoriteStock(userId, stockId, requester))
           .isInstanceOf(DomainException.class)
           .extracting("errorCode")
           .isEqualTo(UserErrorCode.MARKET_DATA_NOT_FOUND);
@@ -333,12 +339,34 @@ class UserServiceTest {
 
       given(interestStockRepository.findByUserIdAndStockId(userId, stockId)).willReturn(Optional.of(interestStock));
 
+      Requester requester = new Requester(userId, UserRole.USER);
+
       // when
-      UserDto.FavoriteStockResponse response = userService.removeFavoriteStock(userId, stockId);
+      UserDto.FavoriteStockResponse response = userService.removeFavoriteStock(userId, stockId, requester);
 
       // then
       assertThat(response.getStockId()).isEqualTo(stockId);
       verify(interestStockRepository, times(1)).deleteByUserIdAndStockId(userId, stockId);
+    }
+
+    @Test
+    @DisplayName("권한 없는 관심 종목 삭제 시도 시 예외 발생")
+    void removeFavoriteStock_Fail_Unauthorized() {
+      // given
+      UUID ownerId = UUID.randomUUID();
+      UUID otherId = UUID.randomUUID();
+      Long stockId = 1L;
+      InterestStock interestStock = InterestStock.create(ownerId, stockId, "Samsung");
+
+      given(interestStockRepository.findByUserIdAndStockId(ownerId, stockId)).willReturn(Optional.of(interestStock));
+
+      Requester requester = new Requester(otherId, UserRole.USER);
+
+      // when & then
+      assertThatThrownBy(() -> userService.removeFavoriteStock(ownerId, stockId, requester))
+          .isInstanceOf(DomainException.class)
+          .extracting("errorCode")
+          .isEqualTo(UserErrorCode.UNAUTHORIZED_INTEREST_STOCK_DELETION);
     }
 
     @Test
@@ -349,8 +377,10 @@ class UserServiceTest {
       Long stockId = 1L;
       given(interestStockRepository.findByUserIdAndStockId(userId, stockId)).willReturn(Optional.empty());
 
+      Requester requester = new Requester(userId, UserRole.USER);
+
       // when & then
-      assertThatThrownBy(() -> userService.removeFavoriteStock(userId, stockId))
+      assertThatThrownBy(() -> userService.removeFavoriteStock(userId, stockId, requester))
           .isInstanceOf(DomainException.class)
           .extracting("errorCode")
           .isEqualTo(UserErrorCode.INTEREST_STOCK_NOT_FOUND);

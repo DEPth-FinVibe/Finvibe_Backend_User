@@ -12,9 +12,9 @@ public interface UserCommandUseCase {
 
     UserDto.UserResponse update(UUID userId, UserDto.UpdateUserRequest request, Requester requester);
 
-    UserDto.FavoriteStockResponse addFavoriteStock(UUID userId, Long stockId);
+    UserDto.FavoriteStockResponse addFavoriteStock(UUID userId, Long stockId, Requester requester);
 
-    UserDto.FavoriteStockResponse removeFavoriteStock(UUID userId, Long stockId);
+    UserDto.FavoriteStockResponse removeFavoriteStock(UUID userId, Long stockId, Requester requester);
 
     void withdraw(UUID userId);
 }

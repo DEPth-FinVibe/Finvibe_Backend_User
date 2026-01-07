@@ -26,7 +26,8 @@ public enum UserErrorCode implements DomainErrorCode {
   INTEREST_STOCK_NOT_FOUND("INTEREST_STOCK_NOT_FOUND", "error.user.interest_stock_not_found"),
   INTEREST_STOCK_ALREADY_EXISTS("INTEREST_STOCK_ALREADY_EXISTS", "error.user.interest_stock_already_exists"),
   MARKET_DATA_NOT_FOUND("MARKET_DATA_NOT_FOUND", "error.user.market_data_not_found"),
-  UNAUTHORIZED_USER_UPDATE("UNAUTHORIZED_USER_UPDATE", "error.user.unauthorized_user_update");
+  UNAUTHORIZED_USER_UPDATE("UNAUTHORIZED_USER_UPDATE", "error.user.unauthorized_user_update"),
+  UNAUTHORIZED_INTEREST_STOCK_DELETION("UNAUTHORIZED_INTEREST_STOCK_DELETION", "error.user.unauthorized_interest_stock_deletion");
 
   private final String code;
   private final String messageKey;

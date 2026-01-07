@@ -88,7 +88,7 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
 
     @Override
     @Transactional
-    public UserDto.FavoriteStockResponse addFavoriteStock(UUID userId, Long stockId) {
+    public UserDto.FavoriteStockResponse addFavoriteStock(UUID userId, Long stockId, Requester requester) {
         checkStockIsAlreadyAdded(userId, stockId);
 
         String stockName = marketClient.getStockNameByStockId(stockId)
@@ -102,9 +102,11 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
 
     @Override
     @Transactional
-    public UserDto.FavoriteStockResponse removeFavoriteStock(UUID userId, Long stockId) {
+    public UserDto.FavoriteStockResponse removeFavoriteStock(UUID userId, Long stockId, Requester requester) {
         InterestStock interestStock = interestStockRepository.findByUserIdAndStockId(userId, stockId)
                 .orElseThrow(() -> new DomainException(UserErrorCode.INTEREST_STOCK_NOT_FOUND));
+
+        interestStock.validateDeletable(requester.getUserId(), requester.getRole());
 
         interestStockRepository.deleteByUserIdAndStockId(userId, stockId);
         return UserDto.FavoriteStockResponse.from(interestStock);
