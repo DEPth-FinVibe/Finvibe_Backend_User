@@ -1,0 +1,120 @@
+---
+description: 에러 핸들링 컨벤션
+alwaysApply: false
+---
+에러 처리 컨벤션 가이드
+목표
+목표
+
+설명
+
+도메인 순수성 유지
+
+도메인/애플리케이션 계층은 HTTP·전송 프로토콜을 전혀 모르게 한다
+
+표현 계층 단일 책임화
+
+REST 응답 변환, 상태코드 결정, 메시지 포맷은 API/Infra 계층에서 일괄 처리
+
+모듈 확장 용이
+
+새 모듈·새 에러 코드 추가 시, 공용 코드 수정 없이 모듈 내부 매퍼만 추가
+
+계층별 책임
+
+
+domain     : 비즈니스 규칙 위반 시 DomainException + DomainErrorCode만 발생
+application: 트랜잭션·유스케이스 조립 (예외 변환 없음)
+api / infra: DomainException → HTTP 응답 변환 담당
+예외 변환 흐름
+
+
+1) Domain / Application 내부에서 DomainException 발생
+   ex) WalletErrorCode.WALLET_NOT_FOUND
+2) @RestControllerAdvice(GlobalExceptionHandler)가 캐치
+3) 등록된 DomainErrorHttpMapper 중 supports(code)가 true인 매퍼 탐색
+4) 매퍼가 HTTP Status 변환
+   → ex) 404 NOT_FOUND
+5) ErrorResponse(code, messageKey) 형식으로 반환
+핵심 구성 요소
+📌 DomainErrorHttpMapper (공용 계약)
+위치: shared/infra/error/DomainErrorHttpMapper
+
+역할:
+
+
+
+boolean supports(DomainErrorCode code);   // 내가 처리할 대상인가?
+HttpStatusCode toStatus(DomainErrorCode); // 어떤 HTTP 코드로 변환할까?
+📌 GlobalExceptionHandler (글로벌 핸들러)
+위치: shared/infra/error/GlobalExceptionHandler
+
+특징:
+
+List<DomainErrorHttpMapper> 자동 주입
+
+매퍼 없으면 500 Internal Server Error 처리
+
+ErrorResponse 형태로 응답
+
+📌 ErrorResponse (응답 포맷)
+
+
+{
+  "code": "WALLET_NOT_FOUND",
+  "messageKey": "wallet.not_found"
+}
+필요한 경우 timestamp, traceId, message 문구 확장 가능
+
+모듈별 매퍼 추가 예시
+
+
+modules/wallet/infra/error/WalletErrorHttpMapper
+
+
+switch(errorCode) {
+  case WALLET_NOT_FOUND       -> 404 NOT_FOUND
+  case INVALID_USER_ID,
+       INVALID_MONEY_AMOUNT,
+       INSUFFICIENT_BALANCE   -> 400 BAD_REQUEST
+}
+→ WalletErrorCode enum 추가만 해도
+✔ Domain / Application 계층 수정 불필요
+✔ 글로벌 핸들러 수정 불필요
+✔ 매퍼만 추가하면 자동 적용
+
+모듈 추가 시 규칙 (Checklist)
+체크
+
+⬜ ErrorCode enum 도메인에 생성
+
+⬜ DomainException에 ErrorCode 사용
+
+⬜ modules/{module}/infra/error에 ErrorHttpMapper 생성
+
+⬜ supports + toStatus 구현
+
+⬜ switch/맵으로 상태코드는 매퍼 안에서 관리
+
+테스트 포인트
+테스트 종류
+
+검증 내용
+
+스프링 컨텍스트 테스트
+
+모듈별 매퍼가 List에 정상 주입되는지
+
+API 통합 테스트
+
+DomainException 발생 → 예상 HTTP status + ErrorResponse 확인
+
+미매핑 코드 테스트
+
+매퍼가 없는 ErrorCode 발생 시 500 떨어지는지
+
+한 눈에 보는 장점
+✔ 상태코드 정책 변경이 매퍼 내부로 한정
+✔ 도메인 로직은 HTTP·REST에서 완전 분리
+✔ 모듈 추가 시 공용 코드 손댈 필요 X
+✔ 전사적인 에러 응답 형식 통합 유지
