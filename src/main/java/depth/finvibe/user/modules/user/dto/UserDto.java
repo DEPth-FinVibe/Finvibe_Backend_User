@@ -1,5 +1,6 @@
 package depth.finvibe.user.modules.user.dto;
 
+import depth.finvibe.user.modules.user.domain.InterestStock;
 import depth.finvibe.user.modules.user.domain.User;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -49,7 +50,6 @@ public class UserDto {
         private final String email;
         private final LocalDate birthDate;
         private final String phoneNumber;
-        private final boolean isDeleted;
 
         public static UserResponse from(User user) {
             return UserResponse.builder()
@@ -57,7 +57,6 @@ public class UserDto {
                     .email(user.getEmail().getValue())
                     .birthDate(user.getBirthDate())
                     .phoneNumber(user.getPhoneNumber() != null ? user.getPhoneNumber().toString() : null)
-                    .isDeleted(user.isDeleted())
                     .build();
         }
     }
@@ -65,8 +64,16 @@ public class UserDto {
     @Getter
     @Builder
     public static class FavoriteStockResponse {
-        private final Long interestStockId;
+        private final Long stockId;
         private final String name;
         private final UUID userId;
+
+        public static FavoriteStockResponse from(InterestStock interestStock) {
+            return FavoriteStockResponse.builder()
+                    .stockId(interestStock.getStockId())
+                    .name(interestStock.getStockName())
+                    .userId(interestStock.getUserId())
+                    .build();
+        }
     }
 }

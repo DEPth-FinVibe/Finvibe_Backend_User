@@ -23,6 +23,7 @@ import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
 import java.util.UUID;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Entity
 @AllArgsConstructor
@@ -66,4 +67,25 @@ public class User extends TimeStampedBaseEntity {
     @Builder.Default
     @Column(nullable = false)
     private boolean isDeleted = false;
+
+    public static User create(String loginId, String password, String email, LocalDate birthDate, String phoneNumber, PasswordEncoder passwordEncoder) {
+        String[] phoneParts = phoneNumber.split("-");
+        PhoneNumber phone = (phoneParts.length == 3)
+            ? new PhoneNumber(phoneParts[0], phoneParts[1], phoneParts[2])
+            : null;
+
+        return User.builder()
+                .id(UUID.randomUUID())
+                .loginId(new LoginId(loginId))
+                .passwordHash(PasswordHash.create(password, passwordEncoder))
+                .email(new Email(email))
+                .birthDate(birthDate)
+                .phoneNumber(phone)
+                .role(UserRole.USER)
+                .build();
+    }
+
+    public void withdraw() {
+        this.isDeleted = true;
+    }
 }

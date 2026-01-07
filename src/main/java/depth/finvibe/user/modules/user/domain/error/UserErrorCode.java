@@ -17,7 +17,15 @@ import lombok.Getter;
 public enum UserErrorCode implements DomainErrorCode {
   INVALID_PHONE_NUMBER_PARAMS("INVALID_PHONE_NUMBER_PARAMS", "error.user.invalid_phone_number_params"),
   INVALID_EMAIL_FORMAT("INVALID_EMAIL_FORMAT", "error.user.invalid_email_format"),
-  INVALID_LOGIN_ID_FORMAT("INVALID_LOGIN_ID_FORMAT", "error.user.invalid_login_id_format")
+  INVALID_LOGIN_ID_FORMAT("INVALID_LOGIN_ID_FORMAT", "error.user.invalid_login_id_format"),
+  EMAIL_ALREADY_EXISTS("EMAIL_ALREADY_EXISTS", "error.user.email_already_exists"),
+  LOGIN_ID_ALREADY_EXISTS("LOGIN_ID_ALREADY_EXISTS", "error.user.login_id_already_exists"),
+  USER_NOT_FOUND("USER_NOT_FOUND", "error.user.user_not_found"),
+  INVALID_PASSWORD("INVALID_PASSWORD", "error.user.invalid_password"),
+  USER_DELETED("USER_DELETED", "error.user.user_deleted"),
+  INTEREST_STOCK_NOT_FOUND("INTEREST_STOCK_NOT_FOUND", "error.user.interest_stock_not_found"),
+  INTEREST_STOCK_ALREADY_EXISTS("INTEREST_STOCK_ALREADY_EXISTS", "error.user.interest_stock_already_exists"),
+  MARKET_DATA_NOT_FOUND("MARKET_DATA_NOT_FOUND", "error.user.market_data_not_found")
   ;
 
   private final String code;
