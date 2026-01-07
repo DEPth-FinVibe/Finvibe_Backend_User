@@ -1,6 +1,6 @@
-package depth.finvibe.user.modules.user.domain;
+package depth.finvibe.user.modules.user.domain.vo;
 
-import depth.finvibe.user.modules.user.domain.error.WalletErrorCode;
+import depth.finvibe.user.modules.user.domain.error.UserErrorCode;
 import depth.finvibe.user.shared.error.DomainException;
 import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;
@@ -17,7 +17,7 @@ public class PhoneNumber {
 
     public PhoneNumber(String firstPart, String secondPart, String thirdPart) {
         if(firstPart == null || secondPart == null || thirdPart == null) {
-            throw new DomainException(WalletErrorCode.INVALID_PHONE_NUMBER_PARAMS);
+            throw new DomainException(UserErrorCode.INVALID_PHONE_NUMBER_PARAMS);
         }
 
         this.firstPart = firstPart;

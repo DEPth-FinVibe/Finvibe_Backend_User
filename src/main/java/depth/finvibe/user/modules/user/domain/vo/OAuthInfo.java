@@ -1,4 +1,4 @@
-package depth.finvibe.user.modules.user.domain;
+package depth.finvibe.user.modules.user.domain.vo;
 
 import depth.finvibe.user.modules.user.domain.enums.AuthProvider;
 import jakarta.persistence.Column;

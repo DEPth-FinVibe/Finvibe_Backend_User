@@ -1,6 +1,6 @@
-package depth.finvibe.user.modules.user.domain;
+package depth.finvibe.user.modules.user.domain.vo;
 
-import depth.finvibe.user.modules.user.domain.error.WalletErrorCode;
+import depth.finvibe.user.modules.user.domain.error.UserErrorCode;
 import depth.finvibe.user.shared.error.DomainException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
@@ -22,7 +22,7 @@ public class LoginId {
 
     public LoginId(String value) {
         if (value == null || !LOGIN_ID_PATTERN.matcher(value).matches()) {
-            throw new DomainException(WalletErrorCode.INVALID_LOGIN_ID_FORMAT);
+            throw new DomainException(UserErrorCode.INVALID_LOGIN_ID_FORMAT);
         }
         this.value = value;
     }

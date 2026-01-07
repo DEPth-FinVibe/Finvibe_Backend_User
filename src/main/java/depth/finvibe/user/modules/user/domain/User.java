@@ -1,6 +1,11 @@
 package depth.finvibe.user.modules.user.domain;
 
 import depth.finvibe.user.modules.user.domain.enums.UserRole;
+import depth.finvibe.user.modules.user.domain.vo.Email;
+import depth.finvibe.user.modules.user.domain.vo.LoginId;
+import depth.finvibe.user.modules.user.domain.vo.OAuthInfo;
+import depth.finvibe.user.modules.user.domain.vo.PasswordHash;
+import depth.finvibe.user.modules.user.domain.vo.PhoneNumber;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
