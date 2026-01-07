@@ -62,4 +62,8 @@ public class User extends TimeStampedBaseEntity {
         @AttributeOverride(name = "thirdPart", column = @Column(name = "phone_number_third_part"))
     })
     private PhoneNumber phoneNumber;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean isDeleted = false;
 }
