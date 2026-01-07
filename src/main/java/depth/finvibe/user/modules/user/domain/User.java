@@ -3,6 +3,7 @@ package depth.finvibe.user.modules.user.domain;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import lombok.Builder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import depth.finvibe.user.modules.user.domain.enums.UserRole;
