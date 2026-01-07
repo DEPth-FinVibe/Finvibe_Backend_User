@@ -43,6 +43,12 @@ public class InterestStock extends TimeStampedBaseEntity {
                 .build();
     }
 
+    public void validateCreatable(UUID requesterId, UserRole role) {
+        if (!this.userId.equals(requesterId) && role != UserRole.ADMIN) {
+            throw new DomainException(UserErrorCode.UNAUTHORIZED_INTEREST_STOCK_CREATION);
+        }
+    }
+
     public void validateDeletable(UUID requesterId, UserRole role) {
         if (!this.userId.equals(requesterId) && role != UserRole.ADMIN) {
             throw new DomainException(UserErrorCode.UNAUTHORIZED_INTEREST_STOCK_DELETION);

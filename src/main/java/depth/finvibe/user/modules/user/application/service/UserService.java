@@ -95,6 +95,8 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
                 .orElseThrow(() -> new DomainException(UserErrorCode.MARKET_DATA_NOT_FOUND));
 
         InterestStock interestStock = InterestStock.create(userId, stockId, stockName);
+        interestStock.validateCreatable(requester.getUserId(), requester.getRole());
+
         InterestStock saved = interestStockRepository.save(interestStock);
 
         return UserDto.FavoriteStockResponse.from(saved);

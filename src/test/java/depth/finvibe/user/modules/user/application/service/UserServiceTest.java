@@ -294,6 +294,27 @@ class UserServiceTest {
     }
 
     @Test
+    @DisplayName("권한 없는 관심 종목 추가 시도 시 예외 발생")
+    void addFavoriteStock_Fail_Unauthorized() {
+      // given
+      UUID ownerId = UUID.randomUUID();
+      UUID otherId = UUID.randomUUID();
+      Long stockId = 1L;
+      String stockName = "Samsung";
+
+      given(interestStockRepository.findByUserIdAndStockId(ownerId, stockId)).willReturn(Optional.empty());
+      given(marketClient.getStockNameByStockId(stockId)).willReturn(Optional.of(stockName));
+
+      Requester requester = new Requester(otherId, UserRole.USER);
+
+      // when & then
+      assertThatThrownBy(() -> userService.addFavoriteStock(ownerId, stockId, requester))
+          .isInstanceOf(DomainException.class)
+          .extracting("errorCode")
+          .isEqualTo(UserErrorCode.UNAUTHORIZED_INTEREST_STOCK_CREATION);
+    }
+
+    @Test
     @DisplayName("이미 추가된 관심 종목 추가 시도 시 예외 발생")
     void addFavoriteStock_Fail_AlreadyExists() {
       // given
