@@ -24,13 +24,13 @@ public class OAuthInfo {
     @Column(name = "provider_id")
     private String providerId;
 
-    public static OAuthInfo local() {
+    public static OAuthInfo ofLocal() {
         return OAuthInfo.builder()
                 .provider(AuthProvider.LOCAL)
                 .build();
     }
 
-    public static OAuthInfo social(AuthProvider provider, String providerId) {
+    public static OAuthInfo ofSocial(AuthProvider provider, String providerId) {
         return OAuthInfo.builder()
                 .provider(provider)
                 .providerId(providerId)
