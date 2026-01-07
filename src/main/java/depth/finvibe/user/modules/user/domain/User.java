@@ -1,12 +1,19 @@
 package depth.finvibe.user.modules.user.domain;
 
+import java.time.LocalDate;
+import java.util.UUID;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 import depth.finvibe.user.modules.user.domain.enums.UserRole;
+import depth.finvibe.user.modules.user.domain.error.UserErrorCode;
 import depth.finvibe.user.modules.user.domain.vo.Email;
 import depth.finvibe.user.modules.user.domain.vo.LoginId;
 import depth.finvibe.user.modules.user.domain.vo.OAuthInfo;
 import depth.finvibe.user.modules.user.domain.vo.PasswordHash;
 import depth.finvibe.user.modules.user.domain.vo.PhoneNumber;
 import depth.finvibe.user.shared.domain.TimeStampedBaseEntity;
+import depth.finvibe.user.shared.error.DomainException;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
@@ -16,14 +23,9 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.time.LocalDate;
-import java.util.UUID;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Entity
 @AllArgsConstructor
@@ -58,9 +60,9 @@ public class User extends TimeStampedBaseEntity {
 
     @Embedded
     @AttributeOverrides({
-        @AttributeOverride(name = "firstPart", column = @Column(name = "phone_number_first_part")),
-        @AttributeOverride(name = "secondPart", column = @Column(name = "phone_number_second_part")),
-        @AttributeOverride(name = "thirdPart", column = @Column(name = "phone_number_third_part"))
+            @AttributeOverride(name = "firstPart", column = @Column(name = "phone_number_first_part")),
+            @AttributeOverride(name = "secondPart", column = @Column(name = "phone_number_second_part")),
+            @AttributeOverride(name = "thirdPart", column = @Column(name = "phone_number_third_part"))
     })
     private PhoneNumber phoneNumber;
 
@@ -68,11 +70,12 @@ public class User extends TimeStampedBaseEntity {
     @Column(nullable = false)
     private boolean isDeleted = false;
 
-    public static User create(String loginId, String password, String email, LocalDate birthDate, String phoneNumber, PasswordEncoder passwordEncoder) {
+    public static User create(String loginId, String password, String email, LocalDate birthDate, String phoneNumber,
+            PasswordEncoder passwordEncoder) {
         String[] phoneParts = phoneNumber.split("-");
         PhoneNumber phone = (phoneParts.length == 3)
-            ? new PhoneNumber(phoneParts[0], phoneParts[1], phoneParts[2])
-            : null;
+                ? new PhoneNumber(phoneParts[0], phoneParts[1], phoneParts[2])
+                : null;
 
         return User.builder()
                 .id(UUID.randomUUID())
@@ -85,7 +88,52 @@ public class User extends TimeStampedBaseEntity {
                 .build();
     }
 
+    public void update(String loginId,
+            String password,
+            LocalDate birthDate,
+            String phoneNumber,
+            PasswordEncoder passwordEncoder,
+            UUID requesterId,
+            UserRole requesterRole) {
+        validateActive();
+
+        if (requesterId != this.id && requesterRole != UserRole.ADMIN) {
+            throw new DomainException(UserErrorCode.UNAUTHORIZED_USER_UPDATE);
+        }
+
+        if (loginId != null) {
+            this.loginId = new LoginId(loginId);
+        }
+        if (password != null) {
+            this.passwordHash = PasswordHash.create(password, passwordEncoder);
+        }
+        if (birthDate != null) {
+            this.birthDate = birthDate;
+        }
+        if (phoneNumber != null) {
+            String[] phoneParts = phoneNumber.split("-");
+            if (phoneParts.length == 3) {
+                this.phoneNumber = new PhoneNumber(phoneParts[0], phoneParts[1], phoneParts[2]);
+            }
+        }
+    }
+
     public void withdraw() {
+        validateActive();
+
         this.isDeleted = true;
+    }
+
+    public void validateLogin(String rawPassword, PasswordEncoder passwordEncoder) {
+        validateActive();
+        if (this.passwordHash == null || !this.passwordHash.matches(rawPassword, passwordEncoder)) {
+            throw new DomainException(UserErrorCode.INVALID_PASSWORD);
+        }
+    }
+
+    public void validateActive() {
+        if (this.isDeleted) {
+            throw new DomainException(UserErrorCode.USER_DELETED);
+        }
     }
 }

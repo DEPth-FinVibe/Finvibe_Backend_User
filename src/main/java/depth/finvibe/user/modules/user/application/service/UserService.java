@@ -1,5 +1,13 @@
 package depth.finvibe.user.modules.user.application.service;
 
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import depth.finvibe.user.modules.user.application.port.in.UserCommandUseCase;
 import depth.finvibe.user.modules.user.application.port.in.UserQueryUseCase;
 import depth.finvibe.user.modules.user.application.port.out.InterestStockRepository;
@@ -13,15 +21,9 @@ import depth.finvibe.user.modules.user.domain.error.UserErrorCode;
 import depth.finvibe.user.modules.user.domain.vo.Email;
 import depth.finvibe.user.modules.user.domain.vo.LoginId;
 import depth.finvibe.user.modules.user.dto.UserDto;
+import depth.finvibe.user.shared.dto.Requester;
 import depth.finvibe.user.shared.error.DomainException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -54,11 +56,23 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
         User user = userRepository.findByLoginId(new LoginId(request.getLoginId()))
                 .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
 
-        checkIsUserDeleted(user);
-        checkPasswordIsCorrect(request, user);
+        user.validateLogin(request.getPassword(), passwordEncoder);
 
         userEventPublisher.publishUserSignInEvent(user.getId());
         return tokenProvider.generateToken(user.getId());
+    }
+
+    @Override
+    @Transactional
+    public UserDto.UserResponse update(UUID userId, UserDto.UpdateUserRequest request, Requester requester) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
+
+        checkLoginIdAlreadyExist(user, request.getLoginId());
+
+        updateUserAttributes(request, user, requester);
+
+        return UserDto.UserResponse.from(user);
     }
 
     @Override
@@ -67,7 +81,7 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
 
-        checkIsUserDeleted(user);
+        user.validateActive();
 
         return UserDto.UserResponse.from(user);
     }
@@ -86,7 +100,6 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
         return UserDto.FavoriteStockResponse.from(saved);
     }
 
-
     @Override
     @Transactional
     public UserDto.FavoriteStockResponse removeFavoriteStock(UUID userId, Long stockId) {
@@ -102,6 +115,7 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
     public void withdraw(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
+
         user.withdraw();
     }
 
@@ -111,6 +125,17 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
         return interestStockRepository.findAllByUserId(userId).stream()
                 .map(UserDto.FavoriteStockResponse::from)
                 .collect(Collectors.toList());
+    }
+
+    private void updateUserAttributes(UserDto.UpdateUserRequest request, User user, Requester requester) {
+        user.update(
+                request.getLoginId(),
+                request.getPassword(),
+                request.getBirthDate(),
+                request.getPhoneNumber(),
+                passwordEncoder,
+                requester.getUserId(),
+                requester.getRole());
     }
 
     private void checkUserAlreadyExist(UserDto.SignUpRequest request) {
@@ -123,20 +148,17 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
         }
     }
 
+    private void checkLoginIdAlreadyExist(User user, String newLoginId) {
+        if (newLoginId != null && !user.getLoginId().getValue().equals(newLoginId)) {
+            if (userRepository.existsByLoginId(new LoginId(newLoginId))) {
+                throw new DomainException(UserErrorCode.LOGIN_ID_ALREADY_EXISTS);
+            }
+        }
+    }
+
     private User createUserFromSignUpRequest(UserDto.SignUpRequest request) {
-        return User.create(request.getLoginId(), request.getPassword(), request.getEmail(), request.getBirthDate(), request.getPhoneNumber(), passwordEncoder);
-    }
-
-    private static void checkIsUserDeleted(User user) {
-        if (user.isDeleted()) {
-            throw new DomainException(UserErrorCode.USER_DELETED);
-        }
-    }
-
-    private void checkPasswordIsCorrect(UserDto.LoginRequest request, User user) {
-        if (!user.getPasswordHash().matches(request.getPassword(), passwordEncoder)) {
-            throw new DomainException(UserErrorCode.INVALID_PASSWORD);
-        }
+        return User.create(request.getLoginId(), request.getPassword(), request.getEmail(), request.getBirthDate(),
+                request.getPhoneNumber(), passwordEncoder);
     }
 
     private void checkStockIsAlreadyAdded(UUID userId, Long stockId) {

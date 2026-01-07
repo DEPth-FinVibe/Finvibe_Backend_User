@@ -36,6 +36,15 @@ public class UserDto {
 
     @Getter
     @Builder
+    public static class UpdateUserRequest {
+        private final String loginId;
+        private final String password;
+        private final LocalDate birthDate;
+        private final String phoneNumber;
+    }
+
+    @Getter
+    @Builder
     public static class TokenResponse {
         private final String accessToken;
         private final OffsetDateTime accessExpiresAt;
