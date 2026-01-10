@@ -32,6 +32,7 @@ public class UserDto {
     public static class LoginRequest {
         private final String loginId;
         private final String password;
+        private final String deviceId;
     }
 
     @Getter
@@ -56,6 +57,7 @@ public class UserDto {
     @Builder
     public static class TokenRefreshRequest {
         private final String refreshToken;
+        private final String deviceId;
     }
 
     @Getter
@@ -63,6 +65,8 @@ public class UserDto {
     public static class TokenRefreshResponse {
         private final String accessToken;
         private final OffsetDateTime accessExpiresAt;
+        private final String refreshToken;
+        private final OffsetDateTime refreshExpiresAt;
     }
 
     @Getter

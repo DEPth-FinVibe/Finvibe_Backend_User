@@ -67,6 +67,7 @@ class AuthServiceTest {
       UserDto.LoginRequest request = UserDto.LoginRequest.builder()
           .loginId("testuser")
           .password("password")
+          .deviceId("device-1")
           .build();
 
       User user = User.builder()
@@ -92,7 +93,7 @@ class AuthServiceTest {
       // then
       assertThat(response.getAccessToken()).isEqualTo("token");
       verify(userEventPublisher, times(1)).publishUserSignInEvent(user.getId());
-      verify(refreshTokenRepository, times(1)).deleteByUserId(user.getId());
+      verify(refreshTokenRepository, times(1)).deleteByUserIdAndDeviceId(user.getId(), "device-1");
       verify(refreshTokenRepository, times(1)).save(any(RefreshToken.class));
     }
 
@@ -122,11 +123,14 @@ class AuthServiceTest {
       // given
       UUID userId = UUID.randomUUID();
       String refreshToken = "refresh-token";
+      String deviceId = "device-1";
+      String newRefreshToken = "new-refresh-token";
       UserDto.TokenRefreshRequest request = UserDto.TokenRefreshRequest.builder()
           .refreshToken(refreshToken)
+          .deviceId(deviceId)
           .build();
 
-      RefreshToken storedToken = RefreshToken.create(userId, refreshToken);
+      RefreshToken storedToken = RefreshToken.create(userId, deviceId, refreshToken);
       User user = User.builder()
           .id(userId)
           .isDeleted(false)
@@ -136,13 +140,19 @@ class AuthServiceTest {
       given(refreshTokenRepository.findByToken(refreshToken)).willReturn(Optional.of(storedToken));
       given(userRepository.findById(userId)).willReturn(Optional.of(user));
       given(tokenProvider.refreshToken(refreshToken))
-          .willReturn(UserDto.TokenRefreshResponse.builder().accessToken("new-token").build());
+          .willReturn(UserDto.TokenRefreshResponse.builder()
+              .accessToken("new-token")
+              .refreshToken(newRefreshToken)
+              .build());
 
       // when
       UserDto.TokenRefreshResponse response = authService.refreshToken(request);
 
       // then
       assertThat(response.getAccessToken()).isEqualTo("new-token");
+      assertThat(response.getRefreshToken()).isEqualTo(newRefreshToken);
+      verify(refreshTokenRepository, times(1)).deleteByUserIdAndDeviceId(userId, deviceId);
+      verify(refreshTokenRepository, times(1)).save(any(RefreshToken.class));
     }
 
     @Test
@@ -152,6 +162,7 @@ class AuthServiceTest {
       String refreshToken = "invalid";
       UserDto.TokenRefreshRequest request = UserDto.TokenRefreshRequest.builder()
           .refreshToken(refreshToken)
+          .deviceId("device-1")
           .build();
 
       given(tokenResolver.isTokenValid(refreshToken)).willReturn(false);
@@ -170,6 +181,7 @@ class AuthServiceTest {
       String refreshToken = "refresh-token";
       UserDto.TokenRefreshRequest request = UserDto.TokenRefreshRequest.builder()
           .refreshToken(refreshToken)
+          .deviceId("device-1")
           .build();
 
       given(tokenResolver.isTokenValid(refreshToken)).willReturn(true);
@@ -191,6 +203,7 @@ class AuthServiceTest {
     void logout_Success() {
       // given
       UUID userId = UUID.randomUUID();
+      String deviceId = "device-1";
       User user = User.builder()
           .id(userId)
           .isDeleted(false)
@@ -199,10 +212,10 @@ class AuthServiceTest {
       given(userRepository.findById(userId)).willReturn(Optional.of(user));
 
       // when
-      authService.logout(userId);
+      authService.logout(userId, deviceId);
 
       // then
-      verify(refreshTokenRepository, times(1)).deleteByUserId(userId);
+      verify(refreshTokenRepository, times(1)).deleteByUserIdAndDeviceId(userId, deviceId);
     }
   }
 }

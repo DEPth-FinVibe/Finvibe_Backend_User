@@ -9,5 +9,5 @@ public interface AuthCommandUseCase {
 
     UserDto.TokenRefreshResponse refreshToken(UserDto.TokenRefreshRequest request);
 
-    void logout(UUID userId);
+    void logout(UUID userId, String deviceId);
 }

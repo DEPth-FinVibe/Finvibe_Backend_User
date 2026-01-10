@@ -42,26 +42,33 @@ public class AuthService implements AuthCommandUseCase {
 
         userEventPublisher.publishUserSignInEvent(user.getId());
         UserDto.TokenResponse tokenResponse = tokenProvider.generateToken(user.getId());
-        storeRefreshToken(user.getId(), tokenResponse.getRefreshToken());
+        storeRefreshToken(user.getId(), request.getDeviceId(), tokenResponse.getRefreshToken());
         return tokenResponse;
     }
 
     @Override
+    @Transactional
     public UserDto.TokenRefreshResponse refreshToken(UserDto.TokenRefreshRequest request) {
         RefreshToken refreshToken = getValidRefreshToken(request.getRefreshToken());
         validateRefreshTokenOwner(refreshToken.getUserId());
 
-        return tokenProvider.refreshToken(request.getRefreshToken());
+        if (!refreshToken.getDeviceId().equals(request.getDeviceId())) {
+            throw new DomainException(UserErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        UserDto.TokenRefreshResponse response = tokenProvider.refreshToken(request.getRefreshToken());
+        storeRefreshToken(refreshToken.getUserId(), request.getDeviceId(), response.getRefreshToken());
+        return response;
     }
 
     @Override
     @Transactional
-    public void logout(UUID userId) {
+    public void logout(UUID userId, String deviceId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
 
         user.validateActive();
-        refreshTokenRepository.deleteByUserId(userId);
+        refreshTokenRepository.deleteByUserIdAndDeviceId(userId, deviceId);
     }
 
     private RefreshToken getValidRefreshToken(String refreshToken) {
@@ -80,12 +87,12 @@ public class AuthService implements AuthCommandUseCase {
         user.validateActive();
     }
 
-    private void storeRefreshToken(UUID userId, String refreshToken) {
+    private void storeRefreshToken(UUID userId, String deviceId, String refreshToken) {
         if (refreshToken == null) {
             return;
         }
 
-        refreshTokenRepository.deleteByUserId(userId);
-        refreshTokenRepository.save(RefreshToken.create(userId, refreshToken));
+        refreshTokenRepository.deleteByUserIdAndDeviceId(userId, deviceId);
+        refreshTokenRepository.save(RefreshToken.create(userId, deviceId, refreshToken));
     }
 }
