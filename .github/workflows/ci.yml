@@ -28,9 +28,9 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # 4️⃣ Gradle Build
-      - name: Build with Gradle
-        run: ./gradlew build --no-daemon --build-cache --parallel
+      # 4️⃣ Gradle Test
+      - name: Test with Gradle
+        run: ./gradlew test --no-daemon --build-cache --parallel
 
       # 5️⃣ Docker Hub 로그인
       - name: Docker login

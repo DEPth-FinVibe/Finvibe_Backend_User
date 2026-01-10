@@ -11,7 +11,7 @@ COPY build.gradle settings.gradle ./
 COPY src src
 
 RUN chmod +x gradlew \
-    && ./gradlew clean build -x test
+    && ./gradlew clean bootJar -x test
 
 # =========================
 # Runtime Stage
