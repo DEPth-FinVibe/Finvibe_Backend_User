@@ -3,6 +3,7 @@ package depth.finvibe.user.modules.user.domain;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import jakarta.persistence.*;
 import lombok.Builder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -15,14 +16,6 @@ import depth.finvibe.user.modules.user.domain.vo.PasswordHash;
 import depth.finvibe.user.modules.user.domain.vo.PhoneNumber;
 import depth.finvibe.user.shared.domain.TimeStampedBaseEntity;
 import depth.finvibe.user.shared.error.DomainException;
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.AttributeOverrides;
-import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -33,6 +26,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @Getter
 @SuperBuilder
+@Table(name = "users")
 public class User extends TimeStampedBaseEntity {
     @Id
     @Builder.Default
