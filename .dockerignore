@@ -1,0 +1,15 @@
+**
+!build/libs/*.jar
+.git
+.github
+.gradle
+src
+test
+bin
+infra
+deploy
+*.md
+gradlew
+gradlew.bat
+settings.gradle
+build.gradle
