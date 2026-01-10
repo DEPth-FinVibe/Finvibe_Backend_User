@@ -27,6 +27,7 @@ import depth.finvibe.user.modules.user.application.port.out.UserEventPublisher;
 import depth.finvibe.user.modules.user.application.port.out.UserRepository;
 import depth.finvibe.user.modules.user.domain.RefreshToken;
 import depth.finvibe.user.modules.user.domain.User;
+import depth.finvibe.user.modules.user.domain.enums.UserRole;
 import depth.finvibe.user.modules.user.domain.error.UserErrorCode;
 import depth.finvibe.user.modules.user.domain.vo.LoginId;
 import depth.finvibe.user.modules.user.domain.vo.PasswordHash;
@@ -67,12 +68,12 @@ class AuthServiceTest {
       UserDto.LoginRequest request = UserDto.LoginRequest.builder()
           .loginId("testuser")
           .password("password")
-          .deviceId("device-1")
           .build();
 
       User user = User.builder()
           .id(UUID.randomUUID())
           .loginId(new LoginId("testuser"))
+          .role(UserRole.USER)
           .isDeleted(false)
           .build();
       given(passwordEncoder.encode("password")).willReturn("encodedPassword");
@@ -81,14 +82,14 @@ class AuthServiceTest {
 
       given(userRepository.findByLoginId(any(LoginId.class))).willReturn(Optional.of(user));
       given(passwordEncoder.matches(request.getPassword(), "encodedPassword")).willReturn(true);
-      given(tokenProvider.generateToken(user.getId()))
+      given(tokenProvider.generateToken(user.getId(), user.getRole()))
           .willReturn(UserDto.TokenResponse.builder()
               .accessToken("token")
               .refreshToken("refresh-token")
               .build());
 
       // when
-      UserDto.TokenResponse response = authService.login(request);
+      UserDto.TokenResponse response = authService.login("device-1", request);
 
       // then
       assertThat(response.getAccessToken()).isEqualTo("token");
@@ -107,7 +108,7 @@ class AuthServiceTest {
       given(userRepository.findByLoginId(any(LoginId.class))).willReturn(Optional.empty());
 
       // when & then
-      assertThatThrownBy(() -> authService.login(request))
+      assertThatThrownBy(() -> authService.login("device-1", request))
           .isInstanceOf(DomainException.class)
           .extracting("errorCode")
           .isEqualTo(UserErrorCode.USER_NOT_FOUND);
@@ -127,7 +128,6 @@ class AuthServiceTest {
       String newRefreshToken = "new-refresh-token";
       UserDto.TokenRefreshRequest request = UserDto.TokenRefreshRequest.builder()
           .refreshToken(refreshToken)
-          .deviceId(deviceId)
           .build();
 
       RefreshToken storedToken = RefreshToken.create(userId, deviceId, refreshToken);
@@ -146,7 +146,7 @@ class AuthServiceTest {
               .build());
 
       // when
-      UserDto.TokenRefreshResponse response = authService.refreshToken(request);
+      UserDto.TokenRefreshResponse response = authService.refreshToken(deviceId, request);
 
       // then
       assertThat(response.getAccessToken()).isEqualTo("new-token");
@@ -162,13 +162,12 @@ class AuthServiceTest {
       String refreshToken = "invalid";
       UserDto.TokenRefreshRequest request = UserDto.TokenRefreshRequest.builder()
           .refreshToken(refreshToken)
-          .deviceId("device-1")
           .build();
 
       given(tokenResolver.isTokenValid(refreshToken)).willReturn(false);
 
       // when & then
-      assertThatThrownBy(() -> authService.refreshToken(request))
+      assertThatThrownBy(() -> authService.refreshToken("device-1", request))
           .isInstanceOf(DomainException.class)
           .extracting("errorCode")
           .isEqualTo(UserErrorCode.INVALID_REFRESH_TOKEN);
@@ -181,14 +180,13 @@ class AuthServiceTest {
       String refreshToken = "refresh-token";
       UserDto.TokenRefreshRequest request = UserDto.TokenRefreshRequest.builder()
           .refreshToken(refreshToken)
-          .deviceId("device-1")
           .build();
 
       given(tokenResolver.isTokenValid(refreshToken)).willReturn(true);
       given(refreshTokenRepository.findByToken(refreshToken)).willReturn(Optional.empty());
 
       // when & then
-      assertThatThrownBy(() -> authService.refreshToken(request))
+      assertThatThrownBy(() -> authService.refreshToken("device-1", request))
           .isInstanceOf(DomainException.class)
           .extracting("errorCode")
           .isEqualTo(UserErrorCode.INVALID_REFRESH_TOKEN);

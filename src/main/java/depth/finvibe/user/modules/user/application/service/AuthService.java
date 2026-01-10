@@ -34,30 +34,30 @@ public class AuthService implements AuthCommandUseCase {
 
     @Override
     @Transactional
-    public UserDto.TokenResponse login(UserDto.LoginRequest request) {
+    public UserDto.TokenResponse login(String deviceId, UserDto.LoginRequest request) {
         User user = userRepository.findByLoginId(new LoginId(request.getLoginId()))
                 .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
 
         user.validateLogin(request.getPassword(), passwordEncoder);
 
         userEventPublisher.publishUserSignInEvent(user.getId());
-        UserDto.TokenResponse tokenResponse = tokenProvider.generateToken(user.getId());
-        storeRefreshToken(user.getId(), request.getDeviceId(), tokenResponse.getRefreshToken());
+        UserDto.TokenResponse tokenResponse = tokenProvider.generateToken(user.getId(), user.getRole());
+        storeRefreshToken(user.getId(), deviceId, tokenResponse.getRefreshToken());
         return tokenResponse;
     }
 
     @Override
     @Transactional
-    public UserDto.TokenRefreshResponse refreshToken(UserDto.TokenRefreshRequest request) {
+    public UserDto.TokenRefreshResponse refreshToken(String deviceId, UserDto.TokenRefreshRequest request) {
         RefreshToken refreshToken = getValidRefreshToken(request.getRefreshToken());
         validateRefreshTokenOwner(refreshToken.getUserId());
 
-        if (!refreshToken.getDeviceId().equals(request.getDeviceId())) {
+        if (!refreshToken.getDeviceId().equals(deviceId)) {
             throw new DomainException(UserErrorCode.INVALID_REFRESH_TOKEN);
         }
 
         UserDto.TokenRefreshResponse response = tokenProvider.refreshToken(request.getRefreshToken());
-        storeRefreshToken(refreshToken.getUserId(), request.getDeviceId(), response.getRefreshToken());
+        storeRefreshToken(refreshToken.getUserId(), deviceId, response.getRefreshToken());
         return response;
     }
 
