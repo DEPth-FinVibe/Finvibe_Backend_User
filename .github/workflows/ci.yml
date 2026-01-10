@@ -4,9 +4,12 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  build-and-deploy:
+  test:
     runs-on: ubuntu-latest
 
     steps:
@@ -31,6 +34,16 @@ jobs:
       # 4️⃣ Gradle Test
       - name: Test with Gradle
         run: ./gradlew test --no-daemon --build-cache --parallel
+
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      # 1️⃣ Backend Repo Checkout
+      - name: Checkout backend repository
+        uses: actions/checkout@v4
 
       # 5️⃣ Docker Hub 로그인
       - name: Docker login
@@ -58,8 +71,9 @@ jobs:
           tags: cmh1448/finvibe-user:${{ env.IMAGE_TAG }}
           build-args: |
             PROFILE=prod
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=finvibe-user
+          cache-to: type=gha,mode=max,scope=finvibe-user
+          provenance: false
 
       # 9️⃣ manifest repo checkout
       - name: Checkout manifest repo
