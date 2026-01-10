@@ -135,12 +135,12 @@ class AuthServiceTest {
 
       User user = User.builder()
           .id(UUID.randomUUID())
-          .oAuthInfo(OAuthInfo.ofSocial(AuthProvider.GOOGLE, "google-id"))
+          .oauthInfo(OAuthInfo.ofSocial(AuthProvider.GOOGLE, "google-id"))
           .role(UserRole.USER)
           .isDeleted(false)
           .build();
 
-      given(userRepository.findByOAuthInfo(any(OAuthInfo.class))).willReturn(Optional.of(user));
+      given(userRepository.findByOauthInfo(any(OAuthInfo.class))).willReturn(Optional.of(user));
       given(tokenProvider.generateToken(user.getId(), user.getRole()))
           .willReturn(UserDto.TokenResponse.builder()
               .accessToken("token")
@@ -166,7 +166,7 @@ class AuthServiceTest {
           .email("new@example.com")
           .build();
 
-      given(userRepository.findByOAuthInfo(any(OAuthInfo.class))).willReturn(Optional.empty());
+      given(userRepository.findByOauthInfo(any(OAuthInfo.class))).willReturn(Optional.empty());
       given(temporaryTokenProvider.generateTemporaryToken(AuthProvider.GOOGLE, "google-id", "new@example.com"))
           .willReturn("temp-token");
 

@@ -44,7 +44,7 @@ public class User extends TimeStampedBaseEntity {
     private PasswordHash passwordHash;
 
     @Embedded
-    private OAuthInfo oAuthInfo;
+    private OAuthInfo oauthInfo;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -91,7 +91,7 @@ public class User extends TimeStampedBaseEntity {
 
         return User.builder()
                 .id(UUID.randomUUID())
-                .oAuthInfo(oAuthInfo)
+                .oauthInfo(oAuthInfo)
                 .email(new Email(email))
                 .birthDate(birthDate)
                 .phoneNumber(phone)

@@ -15,7 +15,7 @@ public interface UserRepository {
 
     Optional<User> findByLoginId(LoginId loginId);
 
-    Optional<User> findByOAuthInfo(OAuthInfo oAuthInfo);
+    Optional<User> findByOauthInfo(OAuthInfo oauthInfo);
 
     boolean existsByEmail(Email email);
 

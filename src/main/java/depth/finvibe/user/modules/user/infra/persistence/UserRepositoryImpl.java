@@ -33,8 +33,8 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public Optional<User> findByOAuthInfo(OAuthInfo oAuthInfo) {
-        return jpaUserRepository.findByOAuthInfo(oAuthInfo);
+    public Optional<User> findByOauthInfo(OAuthInfo oauthInfo) {
+        return jpaUserRepository.findByOauthInfo(oauthInfo);
     }
 
     @Override

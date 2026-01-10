@@ -148,7 +148,7 @@ class UserServiceTest {
 
       // then
       User savedUser = userCaptor.getValue();
-      assertThat(savedUser.getOAuthInfo().getProvider()).isEqualTo(AuthProvider.GOOGLE);
+      assertThat(savedUser.getOauthInfo().getProvider()).isEqualTo(AuthProvider.GOOGLE);
       assertThat(response.getUser().getEmail()).isEqualTo("google@example.com");
       assertThat(response.getTokens().getAccessToken()).isEqualTo("access");
       verify(userEventPublisher, times(1)).publishUserSignUpEvent(savedUser.getId());

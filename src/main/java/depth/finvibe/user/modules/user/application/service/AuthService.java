@@ -51,7 +51,7 @@ public class AuthService implements AuthCommandUseCase {
     public UserDto.OAuthLoginResponse oauthLogin(UserDto.OAuthLoginRequest request) {
         OAuthInfo oAuthInfo = OAuthInfo.ofSocial(request.getProvider(), request.getProviderId());
 
-        return userRepository.findByOAuthInfo(oAuthInfo)
+        return userRepository.findByOauthInfo(oAuthInfo)
                 .map(this::handleExistingOAuthUser)
                 .orElseGet(() -> handleNewOAuthUser(request));
     }

@@ -54,8 +54,8 @@ class UserTest {
 
         // then
         assertThat(user.getId()).isNotNull();
-        assertThat(user.getOAuthInfo().getProvider()).isEqualTo(AuthProvider.GOOGLE);
-        assertThat(user.getOAuthInfo().getProviderId()).isEqualTo("google-id");
+        assertThat(user.getOauthInfo().getProvider()).isEqualTo(AuthProvider.GOOGLE);
+        assertThat(user.getOauthInfo().getProviderId()).isEqualTo("google-id");
         assertThat(user.getEmail().getValue()).isEqualTo(email);
         assertThat(user.getBirthDate()).isEqualTo(birthDate);
         assertThat(user.getPhoneNumber().toString()).isEqualTo(phoneNumber);
