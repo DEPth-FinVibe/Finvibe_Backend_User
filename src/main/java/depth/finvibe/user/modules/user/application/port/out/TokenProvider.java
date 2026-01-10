@@ -6,4 +6,6 @@ import java.util.UUID;
 
 public interface TokenProvider {
     UserDto.TokenResponse generateToken(UUID userId);
+
+    UserDto.TokenRefreshResponse refreshToken(String refreshToken);
 }

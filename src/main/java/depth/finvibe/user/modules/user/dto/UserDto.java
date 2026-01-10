@@ -54,6 +54,19 @@ public class UserDto {
 
     @Getter
     @Builder
+    public static class TokenRefreshRequest {
+        private final String refreshToken;
+    }
+
+    @Getter
+    @Builder
+    public static class TokenRefreshResponse {
+        private final String accessToken;
+        private final OffsetDateTime accessExpiresAt;
+    }
+
+    @Getter
+    @Builder
     public static class UserResponse {
         private final UUID userId;
         private final String email;

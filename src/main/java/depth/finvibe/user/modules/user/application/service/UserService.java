@@ -4,17 +4,13 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import depth.finvibe.user.modules.user.application.port.out.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import depth.finvibe.user.modules.user.application.port.in.UserCommandUseCase;
 import depth.finvibe.user.modules.user.application.port.in.UserQueryUseCase;
-import depth.finvibe.user.modules.user.application.port.out.InterestStockRepository;
-import depth.finvibe.user.modules.user.application.port.out.MarketClient;
-import depth.finvibe.user.modules.user.application.port.out.TokenProvider;
-import depth.finvibe.user.modules.user.application.port.out.UserEventPublisher;
-import depth.finvibe.user.modules.user.application.port.out.UserRepository;
 import depth.finvibe.user.modules.user.domain.InterestStock;
 import depth.finvibe.user.modules.user.domain.User;
 import depth.finvibe.user.modules.user.domain.error.UserErrorCode;
@@ -33,7 +29,6 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
     private final UserRepository userRepository;
     private final InterestStockRepository interestStockRepository;
     private final UserEventPublisher userEventPublisher;
-    private final TokenProvider tokenProvider;
     private final MarketClient marketClient;
     private final PasswordEncoder passwordEncoder;
 
@@ -48,18 +43,6 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
         userEventPublisher.publishUserSignUpEvent(savedUser.getId());
 
         return UserDto.UserResponse.from(savedUser);
-    }
-
-    @Override
-    @Transactional
-    public UserDto.TokenResponse login(UserDto.LoginRequest request) {
-        User user = userRepository.findByLoginId(new LoginId(request.getLoginId()))
-                .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
-
-        user.validateLogin(request.getPassword(), passwordEncoder);
-
-        userEventPublisher.publishUserSignInEvent(user.getId());
-        return tokenProvider.generateToken(user.getId());
     }
 
     @Override
@@ -141,6 +124,7 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
                 requester.getUserId(),
                 requester.getRole());
     }
+
 
     private void checkUserAlreadyExist(UserDto.SignUpRequest request) {
         if (userRepository.existsByEmail(new Email(request.getEmail()))) {

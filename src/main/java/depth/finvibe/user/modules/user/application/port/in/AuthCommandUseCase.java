@@ -1,0 +1,13 @@
+package depth.finvibe.user.modules.user.application.port.in;
+
+import java.util.UUID;
+
+import depth.finvibe.user.modules.user.dto.UserDto;
+
+public interface AuthCommandUseCase {
+    UserDto.TokenResponse login(UserDto.LoginRequest request);
+
+    UserDto.TokenRefreshResponse refreshToken(UserDto.TokenRefreshRequest request);
+
+    void logout(UUID userId);
+}

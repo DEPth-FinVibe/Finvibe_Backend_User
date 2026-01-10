@@ -1,0 +1,37 @@
+spring:
+  config:
+    import:
+      - optional:classpath:application-kafka.yml
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.mariadb.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.MySQLDialect # 사용하시는 DB에 맞춰 수정 필요
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    consumer:
+      group-id: finvibe-investment-group
+      properties:
+        spring.json.trusted.packages: "depth.finvibe.investment.*"
+
+logging:
+  level:
+    root: info
+    depth.finvibe.investment: info
