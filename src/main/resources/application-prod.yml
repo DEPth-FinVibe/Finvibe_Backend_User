@@ -2,6 +2,7 @@ spring:
   config:
     import:
       - optional:classpath:application-kafka.yml
+      - optional:classpath:application-oauth.yml
 
   datasource:
     url: ${DB_URL}
