@@ -13,6 +13,8 @@ public enum GlobalErrorCode implements DomainErrorCode {
   UNSUPPORTED_MEDIA_TYPE("UNSUPPORTED_MEDIA_TYPE", "error.unsupported_media_type"),
   NOT_ACCEPTABLE("NOT_ACCEPTABLE", "error.not_acceptable"),
   NOT_FOUND("NOT_FOUND", "error.not_found"),
+  AUTHENTICATION_FAILED("UNAUTHORIZED", "error.authentication_failed"),
+  ACCESS_DENIED("FORBIDDEN", "error.access_denied"),
   INTERNAL_SERVER_ERROR("INTERNAL_SERVER_ERROR", "error.internal_server_error");
 
   private final String code;
@@ -35,6 +37,13 @@ public enum GlobalErrorCode implements DomainErrorCode {
     if (value == HttpStatus.NOT_ACCEPTABLE.value()) {
       return NOT_ACCEPTABLE;
     }
+    if (value == HttpStatus.UNAUTHORIZED.value()) {
+      return AUTHENTICATION_FAILED;
+    }
+    if (value == HttpStatus.FORBIDDEN.value()) {
+      return ACCESS_DENIED;
+    }
+
     return INTERNAL_SERVER_ERROR;
   }
 }

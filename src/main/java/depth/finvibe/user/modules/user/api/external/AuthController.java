@@ -1,4 +1,4 @@
-package depth.finvibe.user.modules.user.application.api.external;
+package depth.finvibe.user.modules.user.api.external;
 
 import depth.finvibe.user.boot.security.model.AuthenticatedUser;
 import depth.finvibe.user.modules.user.application.port.in.AuthCommandUseCase;
