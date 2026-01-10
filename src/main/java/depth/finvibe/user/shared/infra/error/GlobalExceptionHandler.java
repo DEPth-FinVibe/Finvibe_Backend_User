@@ -37,7 +37,7 @@ public class GlobalExceptionHandler {
     ErrorResponse body = ErrorResponse.of(
         status.value(),
         ex.getErrorCode().getCode(),
-        ex.getErrorCode().getMessageKey()
+        ex.getErrorCode().getMessage()
     );
     return ResponseEntity.status(status).body(body);
   }
@@ -55,7 +55,7 @@ public class GlobalExceptionHandler {
     ErrorResponse body = ErrorResponse.of(
         HttpStatus.BAD_REQUEST.value(),
         GlobalErrorCode.INVALID_REQUEST.getCode(),
-        GlobalErrorCode.INVALID_REQUEST.getMessageKey()
+        GlobalErrorCode.INVALID_REQUEST.getMessage()
     );
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
   }
@@ -65,7 +65,7 @@ public class GlobalExceptionHandler {
     ErrorResponse body = ErrorResponse.of(
         HttpStatus.METHOD_NOT_ALLOWED.value(),
         GlobalErrorCode.METHOD_NOT_ALLOWED.getCode(),
-        GlobalErrorCode.METHOD_NOT_ALLOWED.getMessageKey()
+        GlobalErrorCode.METHOD_NOT_ALLOWED.getMessage()
     );
     return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(body);
   }
@@ -75,7 +75,7 @@ public class GlobalExceptionHandler {
     ErrorResponse body = ErrorResponse.of(
         HttpStatus.UNSUPPORTED_MEDIA_TYPE.value(),
         GlobalErrorCode.UNSUPPORTED_MEDIA_TYPE.getCode(),
-        GlobalErrorCode.UNSUPPORTED_MEDIA_TYPE.getMessageKey()
+        GlobalErrorCode.UNSUPPORTED_MEDIA_TYPE.getMessage()
     );
     return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(body);
   }
@@ -85,7 +85,7 @@ public class GlobalExceptionHandler {
     ErrorResponse body = ErrorResponse.of(
         HttpStatus.NOT_ACCEPTABLE.value(),
         GlobalErrorCode.NOT_ACCEPTABLE.getCode(),
-        GlobalErrorCode.NOT_ACCEPTABLE.getMessageKey()
+        GlobalErrorCode.NOT_ACCEPTABLE.getMessage()
     );
     return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(body);
   }
@@ -95,7 +95,7 @@ public class GlobalExceptionHandler {
     ErrorResponse body = ErrorResponse.of(
         HttpStatus.NOT_FOUND.value(),
         GlobalErrorCode.NOT_FOUND.getCode(),
-        GlobalErrorCode.NOT_FOUND.getMessageKey()
+        GlobalErrorCode.NOT_FOUND.getMessage()
     );
     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
   }
@@ -107,7 +107,7 @@ public class GlobalExceptionHandler {
     ErrorResponse body = ErrorResponse.of(
         status.value(),
         code.getCode(),
-        code.getMessageKey()
+        code.getMessage()
     );
     return ResponseEntity.status(status).body(body);
   }
@@ -117,7 +117,7 @@ public class GlobalExceptionHandler {
     ErrorResponse body = ErrorResponse.of(
         HttpStatus.INTERNAL_SERVER_ERROR.value(),
         GlobalErrorCode.INTERNAL_SERVER_ERROR.getCode(),
-        GlobalErrorCode.INTERNAL_SERVER_ERROR.getMessageKey()
+        GlobalErrorCode.INTERNAL_SERVER_ERROR.getMessage()
     );
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
   }

@@ -9,29 +9,29 @@ import lombok.Getter;
  * 
  * <p>
  * {@link DomainErrorCode}를 구현하여 유저 도메인의 고유한 에러 상황을 명세합니다.
- * 각 상수는 에러 식별 코드와 다국어 메시지 키를 포함합니다.
+ * 각 상수는 에러 식별 코드와 사용자 메시지를 포함합니다.
  * </p>
  */
 @AllArgsConstructor
 @Getter
 public enum UserErrorCode implements DomainErrorCode {
-  INVALID_PHONE_NUMBER_PARAMS("INVALID_PHONE_NUMBER_PARAMS", "error.user.invalid_phone_number_params"),
-  INVALID_EMAIL_FORMAT("INVALID_EMAIL_FORMAT", "error.user.invalid_email_format"),
-  INVALID_LOGIN_ID_FORMAT("INVALID_LOGIN_ID_FORMAT", "error.user.invalid_login_id_format"),
-  EMAIL_ALREADY_EXISTS("EMAIL_ALREADY_EXISTS", "error.user.email_already_exists"),
-  LOGIN_ID_ALREADY_EXISTS("LOGIN_ID_ALREADY_EXISTS", "error.user.login_id_already_exists"),
-  USER_NOT_FOUND("USER_NOT_FOUND", "error.user.user_not_found"),
-  INVALID_PASSWORD("INVALID_PASSWORD", "error.user.invalid_password"),
-  USER_DELETED("USER_DELETED", "error.user.user_deleted"),
-  INTEREST_STOCK_NOT_FOUND("INTEREST_STOCK_NOT_FOUND", "error.user.interest_stock_not_found"),
-  INTEREST_STOCK_ALREADY_EXISTS("INTEREST_STOCK_ALREADY_EXISTS", "error.user.interest_stock_already_exists"),
-  MARKET_DATA_NOT_FOUND("MARKET_DATA_NOT_FOUND", "error.user.market_data_not_found"),
-  UNAUTHORIZED_USER_UPDATE("UNAUTHORIZED_USER_UPDATE", "error.user.unauthorized_user_update"),
-  UNAUTHORIZED_INTEREST_STOCK_DELETION("UNAUTHORIZED_INTEREST_STOCK_DELETION", "error.user.unauthorized_interest_stock_deletion"),
-  UNAUTHORIZED_INTEREST_STOCK_CREATION("UNAUTHORIZED_INTEREST_STOCK_CREATION", "error.user.unauthorized_interest_stock_creation"),
-  INVALID_REFRESH_TOKEN("INVALID_REFRESH_TOKEN", "error.user.invalid_refresh_token"),
-  INVALID_TEMPORARY_TOKEN("INVALID_TEMPORARY_TOKEN", "error.user.invalid_temporary_token");
+  INVALID_PHONE_NUMBER_PARAMS("INVALID_PHONE_NUMBER_PARAMS", "휴대폰 번호 형식이 올바르지 않습니다."),
+  INVALID_EMAIL_FORMAT("INVALID_EMAIL_FORMAT", "이메일 형식이 올바르지 않습니다."),
+  INVALID_LOGIN_ID_FORMAT("INVALID_LOGIN_ID_FORMAT", "로그인 ID 형식이 올바르지 않습니다."),
+  EMAIL_ALREADY_EXISTS("EMAIL_ALREADY_EXISTS", "이미 존재하는 이메일입니다."),
+  LOGIN_ID_ALREADY_EXISTS("LOGIN_ID_ALREADY_EXISTS", "이미 존재하는 로그인 ID입니다."),
+  USER_NOT_FOUND("USER_NOT_FOUND", "사용자를 찾을 수 없습니다."),
+  INVALID_PASSWORD("INVALID_PASSWORD", "비밀번호가 올바르지 않습니다."),
+  USER_DELETED("USER_DELETED", "삭제된 사용자입니다."),
+  INTEREST_STOCK_NOT_FOUND("INTEREST_STOCK_NOT_FOUND", "관심 종목을 찾을 수 없습니다."),
+  INTEREST_STOCK_ALREADY_EXISTS("INTEREST_STOCK_ALREADY_EXISTS", "이미 등록된 관심 종목입니다."),
+  MARKET_DATA_NOT_FOUND("MARKET_DATA_NOT_FOUND", "시장 데이터를 찾을 수 없습니다."),
+  UNAUTHORIZED_USER_UPDATE("UNAUTHORIZED_USER_UPDATE", "사용자 정보를 수정할 권한이 없습니다."),
+  UNAUTHORIZED_INTEREST_STOCK_DELETION("UNAUTHORIZED_INTEREST_STOCK_DELETION", "관심 종목을 삭제할 권한이 없습니다."),
+  UNAUTHORIZED_INTEREST_STOCK_CREATION("UNAUTHORIZED_INTEREST_STOCK_CREATION", "관심 종목을 등록할 권한이 없습니다."),
+  INVALID_REFRESH_TOKEN("INVALID_REFRESH_TOKEN", "리프레시 토큰이 유효하지 않습니다."),
+  INVALID_TEMPORARY_TOKEN("INVALID_TEMPORARY_TOKEN", "임시 토큰이 유효하지 않습니다.");
 
   private final String code;
-  private final String messageKey;
+  private final String message;
 }

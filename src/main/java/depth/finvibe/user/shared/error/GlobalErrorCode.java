@@ -8,17 +8,17 @@ import org.springframework.http.HttpStatusCode;
 @Getter
 @RequiredArgsConstructor
 public enum GlobalErrorCode implements DomainErrorCode {
-  INVALID_REQUEST("INVALID_REQUEST", "error.invalid_request"),
-  METHOD_NOT_ALLOWED("METHOD_NOT_ALLOWED", "error.method_not_allowed"),
-  UNSUPPORTED_MEDIA_TYPE("UNSUPPORTED_MEDIA_TYPE", "error.unsupported_media_type"),
-  NOT_ACCEPTABLE("NOT_ACCEPTABLE", "error.not_acceptable"),
-  NOT_FOUND("NOT_FOUND", "error.not_found"),
-  AUTHENTICATION_FAILED("UNAUTHORIZED", "error.authentication_failed"),
-  ACCESS_DENIED("FORBIDDEN", "error.access_denied"),
-  INTERNAL_SERVER_ERROR("INTERNAL_SERVER_ERROR", "error.internal_server_error");
+  INVALID_REQUEST("INVALID_REQUEST", "잘못된 요청입니다."),
+  METHOD_NOT_ALLOWED("METHOD_NOT_ALLOWED", "허용되지 않은 메서드입니다."),
+  UNSUPPORTED_MEDIA_TYPE("UNSUPPORTED_MEDIA_TYPE", "지원하지 않는 미디어 타입입니다."),
+  NOT_ACCEPTABLE("NOT_ACCEPTABLE", "요청한 응답 형식을 제공할 수 없습니다."),
+  NOT_FOUND("NOT_FOUND", "요청한 리소스를 찾을 수 없습니다."),
+  AUTHENTICATION_FAILED("UNAUTHORIZED", "인증에 실패했습니다."),
+  ACCESS_DENIED("FORBIDDEN", "접근 권한이 없습니다."),
+  INTERNAL_SERVER_ERROR("INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다.");
 
   private final String code;
-  private final String messageKey;
+  private final String message;
 
   public static GlobalErrorCode fromStatus(HttpStatusCode status) {
     int value = status.value();
