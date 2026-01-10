@@ -4,6 +4,7 @@ import depth.finvibe.user.modules.user.application.port.out.UserRepository;
 import depth.finvibe.user.modules.user.domain.User;
 import depth.finvibe.user.modules.user.domain.vo.Email;
 import depth.finvibe.user.modules.user.domain.vo.LoginId;
+import depth.finvibe.user.modules.user.domain.vo.OAuthInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -29,6 +30,11 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public Optional<User> findByLoginId(LoginId loginId) {
         return jpaUserRepository.findByLoginId(loginId);
+    }
+
+    @Override
+    public Optional<User> findByOAuthInfo(OAuthInfo oAuthInfo) {
+        return jpaUserRepository.findByOAuthInfo(oAuthInfo);
     }
 
     @Override

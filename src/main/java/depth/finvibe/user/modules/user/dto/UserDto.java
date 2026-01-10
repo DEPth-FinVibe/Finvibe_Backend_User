@@ -2,6 +2,7 @@ package depth.finvibe.user.modules.user.dto;
 
 import depth.finvibe.user.modules.user.domain.InterestStock;
 import depth.finvibe.user.modules.user.domain.User;
+import depth.finvibe.user.modules.user.domain.enums.AuthProvider;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -25,6 +26,14 @@ public class UserDto {
         private final String phoneNumber;
         private final boolean isDeleted;
         private final String temporaryToken;
+        private final String deviceId;
+    }
+
+    @Getter
+    @Builder
+    public static class SignUpResponse {
+        private final UserResponse user;
+        private final TokenResponse tokens;
     }
 
     @Getter
@@ -32,6 +41,22 @@ public class UserDto {
     public static class LoginRequest {
         private final String loginId;
         private final String password;
+    }
+
+    @Getter
+    @Builder
+    public static class OAuthLoginRequest {
+        private final AuthProvider provider;
+        private final String providerId;
+        private final String email;
+    }
+
+    @Getter
+    @Builder
+    public static class OAuthLoginResponse {
+        private final TokenResponse tokens;
+        private final String temporaryToken;
+        private final boolean registrationRequired;
     }
 
     @Getter

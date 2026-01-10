@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import depth.finvibe.user.modules.user.application.port.in.AuthCommandUseCase;
 import depth.finvibe.user.modules.user.application.port.out.RefreshTokenRepository;
+import depth.finvibe.user.modules.user.application.port.out.TemporaryTokenProvider;
 import depth.finvibe.user.modules.user.application.port.out.TokenProvider;
 import depth.finvibe.user.modules.user.application.port.out.TokenResolver;
 import depth.finvibe.user.modules.user.application.port.out.UserEventPublisher;
@@ -16,6 +17,7 @@ import depth.finvibe.user.modules.user.domain.RefreshToken;
 import depth.finvibe.user.modules.user.domain.User;
 import depth.finvibe.user.modules.user.domain.error.UserErrorCode;
 import depth.finvibe.user.modules.user.domain.vo.LoginId;
+import depth.finvibe.user.modules.user.domain.vo.OAuthInfo;
 import depth.finvibe.user.modules.user.dto.UserDto;
 import depth.finvibe.user.shared.error.DomainException;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,7 @@ public class AuthService implements AuthCommandUseCase {
     private final TokenResolver tokenResolver;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TemporaryTokenProvider temporaryTokenProvider;
 
     @Override
     @Transactional
@@ -40,6 +43,40 @@ public class AuthService implements AuthCommandUseCase {
 
         user.validateLogin(request.getPassword(), passwordEncoder);
 
+        return completeLogin(user, deviceId);
+    }
+
+    @Override
+    @Transactional
+    public UserDto.OAuthLoginResponse oauthLogin(String deviceId, UserDto.OAuthLoginRequest request) {
+        OAuthInfo oAuthInfo = OAuthInfo.ofSocial(request.getProvider(), request.getProviderId());
+
+        return userRepository.findByOAuthInfo(oAuthInfo)
+                .map(user -> handleExistingOAuthUser(user, deviceId))
+                .orElseGet(() -> handleNewOAuthUser(request));
+    }
+
+    private UserDto.OAuthLoginResponse handleExistingOAuthUser(User user, String deviceId) {
+        user.validateActive();
+        return UserDto.OAuthLoginResponse.builder()
+                .tokens(completeLogin(user, deviceId))
+                .registrationRequired(false)
+                .build();
+    }
+
+    private UserDto.OAuthLoginResponse handleNewOAuthUser(UserDto.OAuthLoginRequest request) {
+        String temporaryToken = temporaryTokenProvider.generateTemporaryToken(
+                request.getProvider(),
+                request.getProviderId(),
+                request.getEmail());
+
+        return UserDto.OAuthLoginResponse.builder()
+                .temporaryToken(temporaryToken)
+                .registrationRequired(true)
+                .build();
+    }
+
+    private UserDto.TokenResponse completeLogin(User user, String deviceId) {
         userEventPublisher.publishUserSignInEvent(user.getId());
         UserDto.TokenResponse tokenResponse = tokenProvider.generateToken(user.getId(), user.getRole());
         storeRefreshToken(user.getId(), deviceId, tokenResponse.getRefreshToken());

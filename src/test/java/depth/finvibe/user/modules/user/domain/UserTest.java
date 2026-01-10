@@ -1,6 +1,8 @@
 package depth.finvibe.user.modules.user.domain;
 
+import depth.finvibe.user.modules.user.domain.enums.AuthProvider;
 import depth.finvibe.user.modules.user.domain.enums.UserRole;
+import depth.finvibe.user.modules.user.domain.vo.OAuthInfo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -36,6 +38,30 @@ class UserTest {
         assertThat(user.getRole()).isEqualTo(UserRole.USER);
         assertThat(user.isDeleted()).isFalse();
         assertThat(user.getPasswordHash().matches(password, passwordEncoder)).isTrue();
+    }
+
+    @Test
+    @DisplayName("createSocial 메서드를 통해 소셜 로그인 전용 User 객체를 생성한다")
+    void createSocial_success() {
+        // given
+        OAuthInfo oAuthInfo = OAuthInfo.ofSocial(AuthProvider.GOOGLE, "google-id");
+        String email = "google@example.com";
+        LocalDate birthDate = LocalDate.of(1995, 5, 5);
+        String phoneNumber = "010-9999-9999";
+
+        // when
+        User user = User.createSocial(oAuthInfo, email, birthDate, phoneNumber);
+
+        // then
+        assertThat(user.getId()).isNotNull();
+        assertThat(user.getOAuthInfo().getProvider()).isEqualTo(AuthProvider.GOOGLE);
+        assertThat(user.getOAuthInfo().getProviderId()).isEqualTo("google-id");
+        assertThat(user.getEmail().getValue()).isEqualTo(email);
+        assertThat(user.getBirthDate()).isEqualTo(birthDate);
+        assertThat(user.getPhoneNumber().toString()).isEqualTo(phoneNumber);
+        assertThat(user.getRole()).isEqualTo(UserRole.USER);
+        assertThat(user.getLoginId()).isNull();
+        assertThat(user.getPasswordHash()).isNull();
     }
 
     @Test

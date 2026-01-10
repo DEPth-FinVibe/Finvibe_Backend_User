@@ -29,7 +29,8 @@ public enum UserErrorCode implements DomainErrorCode {
   UNAUTHORIZED_USER_UPDATE("UNAUTHORIZED_USER_UPDATE", "error.user.unauthorized_user_update"),
   UNAUTHORIZED_INTEREST_STOCK_DELETION("UNAUTHORIZED_INTEREST_STOCK_DELETION", "error.user.unauthorized_interest_stock_deletion"),
   UNAUTHORIZED_INTEREST_STOCK_CREATION("UNAUTHORIZED_INTEREST_STOCK_CREATION", "error.user.unauthorized_interest_stock_creation"),
-  INVALID_REFRESH_TOKEN("INVALID_REFRESH_TOKEN", "error.user.invalid_refresh_token");
+  INVALID_REFRESH_TOKEN("INVALID_REFRESH_TOKEN", "error.user.invalid_refresh_token"),
+  INVALID_TEMPORARY_TOKEN("INVALID_TEMPORARY_TOKEN", "error.user.invalid_temporary_token");
 
   private final String code;
   private final String messageKey;

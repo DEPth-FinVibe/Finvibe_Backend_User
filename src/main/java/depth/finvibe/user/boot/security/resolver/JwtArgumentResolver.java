@@ -2,8 +2,8 @@ package depth.finvibe.user.boot.security.resolver;
 
 
 import depth.finvibe.user.boot.security.model.AuthenticatedUser;
-import depth.finvibe.user.boot.security.model.Requester;
 import depth.finvibe.user.modules.user.domain.enums.UserRole;
+import depth.finvibe.user.shared.dto.Requester;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
@@ -52,10 +52,10 @@ public class JwtArgumentResolver implements HandlerMethodArgumentResolver {
 
         var claims = objectMapper.readValue(payload, Map.class);
 
-        return Requester.builder()
-                .uuid(parseUuid(claims.get(USER_UUID_CLAIM)))
-                .role(parseRole(claims.get(ROLE_CLAIM)))
-                .build();
+        return new Requester(
+                parseUuid(claims.get(USER_UUID_CLAIM)),
+                parseRole(claims.get(ROLE_CLAIM))
+        );
     }
 
     private @Nullable String getAuthorizationHeader(NativeWebRequest webRequest) {

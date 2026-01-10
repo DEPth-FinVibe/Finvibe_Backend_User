@@ -5,6 +5,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import depth.finvibe.user.modules.user.application.port.out.*;
+import depth.finvibe.user.modules.user.domain.RefreshToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +17,7 @@ import depth.finvibe.user.modules.user.domain.User;
 import depth.finvibe.user.modules.user.domain.error.UserErrorCode;
 import depth.finvibe.user.modules.user.domain.vo.Email;
 import depth.finvibe.user.modules.user.domain.vo.LoginId;
+import depth.finvibe.user.modules.user.domain.vo.OAuthInfo;
 import depth.finvibe.user.modules.user.dto.UserDto;
 import depth.finvibe.user.shared.dto.Requester;
 import depth.finvibe.user.shared.error.DomainException;
@@ -31,18 +33,61 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
     private final UserEventPublisher userEventPublisher;
     private final MarketClient marketClient;
     private final PasswordEncoder passwordEncoder;
+    private final TemporaryTokenResolver temporaryTokenResolver;
+    private final TokenProvider tokenProvider;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Override
     @Transactional
-    public UserDto.UserResponse signUp(UserDto.SignUpRequest request) {
-        checkUserAlreadyExist(request);
+    public UserDto.SignUpResponse signUp(UserDto.SignUpRequest request) {
+        User savedUser = (request.getTemporaryToken() != null && !request.getTemporaryToken().isBlank())
+                ? signUpWithOAuth(request)
+                : signUpWithLocal(request);
 
-        User user = createUserFromSignUpRequest(request);
-
-        User savedUser = userRepository.save(user);
         userEventPublisher.publishUserSignUpEvent(savedUser.getId());
+        
+        UserDto.TokenResponse tokens = completeLogin(savedUser, request.getDeviceId());
 
-        return UserDto.UserResponse.from(savedUser);
+        return UserDto.SignUpResponse.builder()
+                .user(UserDto.UserResponse.from(savedUser))
+                .tokens(tokens)
+                .build();
+    }
+
+    private User signUpWithLocal(UserDto.SignUpRequest request) {
+        checkUserAlreadyExist(request);
+        User user = createUserFromSignUpRequest(request);
+        return userRepository.save(user);
+    }
+
+    private User signUpWithOAuth(UserDto.SignUpRequest request) {
+        if (!temporaryTokenResolver.isTokenValid(request.getTemporaryToken())) {
+            throw new DomainException(UserErrorCode.INVALID_TEMPORARY_TOKEN);
+        }
+
+        OAuthInfo oAuthInfo = temporaryTokenResolver.getOAuthInfoFromTemporaryToken(request.getTemporaryToken());
+        String email = temporaryTokenResolver.getEmailFromTemporaryToken(request.getTemporaryToken());
+
+        if (userRepository.existsByEmail(new Email(email))) {
+            throw new DomainException(UserErrorCode.EMAIL_ALREADY_EXISTS);
+        }
+
+        User user = User.createSocial(oAuthInfo, email, request.getBirthDate(), request.getPhoneNumber());
+        return userRepository.save(user);
+    }
+
+    private UserDto.TokenResponse completeLogin(User user, String deviceId) {
+        UserDto.TokenResponse tokenResponse = tokenProvider.generateToken(user.getId(), user.getRole());
+        storeRefreshToken(user.getId(), deviceId, tokenResponse.getRefreshToken());
+        return tokenResponse;
+    }
+
+    private void storeRefreshToken(UUID userId, String deviceId, String refreshToken) {
+        if (refreshToken == null || deviceId == null) {
+            return;
+        }
+        refreshTokenRepository.deleteByUserIdAndDeviceId(userId, deviceId);
+        refreshTokenRepository.save(RefreshToken.create(userId, deviceId, refreshToken));
     }
 
     @Override

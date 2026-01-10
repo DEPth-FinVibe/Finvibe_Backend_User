@@ -3,6 +3,7 @@ package depth.finvibe.user.modules.user.application.port.out;
 import depth.finvibe.user.modules.user.domain.User;
 import depth.finvibe.user.modules.user.domain.vo.Email;
 import depth.finvibe.user.modules.user.domain.vo.LoginId;
+import depth.finvibe.user.modules.user.domain.vo.OAuthInfo;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -13,6 +14,8 @@ public interface UserRepository {
     Optional<User> findById(UUID id);
 
     Optional<User> findByLoginId(LoginId loginId);
+
+    Optional<User> findByOAuthInfo(OAuthInfo oAuthInfo);
 
     boolean existsByEmail(Email email);
 

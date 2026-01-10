@@ -6,7 +6,7 @@ import depth.finvibe.user.modules.user.dto.UserDto;
 import depth.finvibe.user.shared.dto.Requester;
 
 public interface UserCommandUseCase {
-    UserDto.UserResponse signUp(UserDto.SignUpRequest request);
+    UserDto.SignUpResponse signUp(UserDto.SignUpRequest request);
 
     UserDto.UserResponse update(UUID userId, UserDto.UpdateUserRequest request, Requester requester);
 

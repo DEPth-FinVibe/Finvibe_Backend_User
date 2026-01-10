@@ -83,6 +83,22 @@ public class User extends TimeStampedBaseEntity {
                 .build();
     }
 
+    public static User createSocial(OAuthInfo oAuthInfo, String email, LocalDate birthDate, String phoneNumber) {
+        String[] phoneParts = phoneNumber.split("-");
+        PhoneNumber phone = (phoneParts.length == 3)
+                ? new PhoneNumber(phoneParts[0], phoneParts[1], phoneParts[2])
+                : null;
+
+        return User.builder()
+                .id(UUID.randomUUID())
+                .oAuthInfo(oAuthInfo)
+                .email(new Email(email))
+                .birthDate(birthDate)
+                .phoneNumber(phone)
+                .role(UserRole.USER)
+                .build();
+    }
+
     public void update(String loginId,
             String password,
             LocalDate birthDate,

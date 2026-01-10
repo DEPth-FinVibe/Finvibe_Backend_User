@@ -21,15 +21,18 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import depth.finvibe.user.modules.user.application.port.out.RefreshTokenRepository;
+import depth.finvibe.user.modules.user.application.port.out.TemporaryTokenProvider;
 import depth.finvibe.user.modules.user.application.port.out.TokenProvider;
 import depth.finvibe.user.modules.user.application.port.out.TokenResolver;
 import depth.finvibe.user.modules.user.application.port.out.UserEventPublisher;
 import depth.finvibe.user.modules.user.application.port.out.UserRepository;
 import depth.finvibe.user.modules.user.domain.RefreshToken;
 import depth.finvibe.user.modules.user.domain.User;
+import depth.finvibe.user.modules.user.domain.enums.AuthProvider;
 import depth.finvibe.user.modules.user.domain.enums.UserRole;
 import depth.finvibe.user.modules.user.domain.error.UserErrorCode;
 import depth.finvibe.user.modules.user.domain.vo.LoginId;
+import depth.finvibe.user.modules.user.domain.vo.OAuthInfo;
 import depth.finvibe.user.modules.user.domain.vo.PasswordHash;
 import depth.finvibe.user.modules.user.dto.UserDto;
 import depth.finvibe.user.shared.error.DomainException;
@@ -57,6 +60,9 @@ class AuthServiceTest {
 
   @Mock
   private PasswordEncoder passwordEncoder;
+
+  @Mock
+  private TemporaryTokenProvider temporaryTokenProvider;
 
   @Nested
   @DisplayName("login")
@@ -112,6 +118,65 @@ class AuthServiceTest {
           .isInstanceOf(DomainException.class)
           .extracting("errorCode")
           .isEqualTo(UserErrorCode.USER_NOT_FOUND);
+    }
+  }
+
+  @Nested
+  @DisplayName("oauthLogin")
+  class OAuthLoginTest {
+    @Test
+    @DisplayName("existing user - success login")
+    void oauthLogin_ExistingUser_Success() {
+      // given
+      UserDto.OAuthLoginRequest request = UserDto.OAuthLoginRequest.builder()
+          .provider(AuthProvider.GOOGLE)
+          .providerId("google-id")
+          .build();
+
+      User user = User.builder()
+          .id(UUID.randomUUID())
+          .oAuthInfo(OAuthInfo.ofSocial(AuthProvider.GOOGLE, "google-id"))
+          .role(UserRole.USER)
+          .isDeleted(false)
+          .build();
+
+      given(userRepository.findByOAuthInfo(any(OAuthInfo.class))).willReturn(Optional.of(user));
+      given(tokenProvider.generateToken(user.getId(), user.getRole()))
+          .willReturn(UserDto.TokenResponse.builder()
+              .accessToken("token")
+              .refreshToken("refresh-token")
+              .build());
+
+      // when
+      UserDto.OAuthLoginResponse response = authService.oauthLogin("device-1", request);
+
+      // then
+      assertThat(response.isRegistrationRequired()).isFalse();
+      assertThat(response.getTokens().getAccessToken()).isEqualTo("token");
+      verify(userEventPublisher, times(1)).publishUserSignInEvent(user.getId());
+    }
+
+    @Test
+    @DisplayName("new user - returns temporary token")
+    void oauthLogin_NewUser_ReturnsTemporaryToken() {
+      // given
+      UserDto.OAuthLoginRequest request = UserDto.OAuthLoginRequest.builder()
+          .provider(AuthProvider.GOOGLE)
+          .providerId("google-id")
+          .email("new@example.com")
+          .build();
+
+      given(userRepository.findByOAuthInfo(any(OAuthInfo.class))).willReturn(Optional.empty());
+      given(temporaryTokenProvider.generateTemporaryToken(AuthProvider.GOOGLE, "google-id", "new@example.com"))
+          .willReturn("temp-token");
+
+      // when
+      UserDto.OAuthLoginResponse response = authService.oauthLogin("device-1", request);
+
+      // then
+      assertThat(response.isRegistrationRequired()).isTrue();
+      assertThat(response.getTemporaryToken()).isEqualTo("temp-token");
+      assertThat(response.getTokens()).isNull();
     }
   }
 

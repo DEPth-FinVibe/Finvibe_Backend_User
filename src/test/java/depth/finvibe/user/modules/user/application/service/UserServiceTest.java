@@ -27,14 +27,20 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import depth.finvibe.user.modules.user.application.port.out.InterestStockRepository;
 import depth.finvibe.user.modules.user.application.port.out.MarketClient;
+import depth.finvibe.user.modules.user.application.port.out.RefreshTokenRepository;
+import depth.finvibe.user.modules.user.application.port.out.TemporaryTokenResolver;
+import depth.finvibe.user.modules.user.application.port.out.TokenProvider;
 import depth.finvibe.user.modules.user.application.port.out.UserEventPublisher;
 import depth.finvibe.user.modules.user.application.port.out.UserRepository;
 import depth.finvibe.user.modules.user.domain.InterestStock;
+import depth.finvibe.user.modules.user.domain.RefreshToken;
 import depth.finvibe.user.modules.user.domain.User;
+import depth.finvibe.user.modules.user.domain.enums.AuthProvider;
 import depth.finvibe.user.modules.user.domain.enums.UserRole;
 import depth.finvibe.user.modules.user.domain.error.UserErrorCode;
 import depth.finvibe.user.modules.user.domain.vo.Email;
 import depth.finvibe.user.modules.user.domain.vo.LoginId;
+import depth.finvibe.user.modules.user.domain.vo.OAuthInfo;
 import depth.finvibe.user.modules.user.domain.vo.PhoneNumber;
 import depth.finvibe.user.modules.user.dto.UserDto;
 import depth.finvibe.user.shared.dto.Requester;
@@ -61,12 +67,21 @@ class UserServiceTest {
   @Mock
   private PasswordEncoder passwordEncoder;
 
+  @Mock
+  private TemporaryTokenResolver temporaryTokenResolver;
+
+  @Mock
+  private TokenProvider tokenProvider;
+
+  @Mock
+  private RefreshTokenRepository refreshTokenRepository;
+
   @Nested
   @DisplayName("signUp")
   class SignUpTest {
     @Test
-    @DisplayName("success")
-    void signUp_Success() {
+    @DisplayName("local signUp success")
+    void signUp_Local_Success() {
       // given
       UserDto.SignUpRequest request = UserDto.SignUpRequest.builder()
           .loginId("user123")
@@ -74,6 +89,7 @@ class UserServiceTest {
           .email("test@example.com")
           .birthDate(LocalDate.of(1990, 1, 1))
           .phoneNumber("010-1234-5678")
+          .deviceId("device-1")
           .build();
 
       given(userRepository.existsByEmail(any(Email.class))).willReturn(false);
@@ -83,13 +99,59 @@ class UserServiceTest {
       ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
       given(userRepository.save(userCaptor.capture())).willAnswer(invocation -> invocation.getArgument(0));
 
+      given(tokenProvider.generateToken(any(UUID.class), any(UserRole.class)))
+          .willReturn(UserDto.TokenResponse.builder()
+              .accessToken("access")
+              .refreshToken("refresh")
+              .build());
+
       // when
-      UserDto.UserResponse response = userService.signUp(request);
+      UserDto.SignUpResponse response = userService.signUp(request);
 
       // then
       User savedUser = userCaptor.getValue();
-      assertThat(response.getUserId()).isEqualTo(savedUser.getId());
-      assertThat(response.getEmail()).isEqualTo("test@example.com");
+      assertThat(response.getUser().getUserId()).isEqualTo(savedUser.getId());
+      assertThat(response.getTokens().getAccessToken()).isEqualTo("access");
+      verify(userEventPublisher, times(1)).publishUserSignUpEvent(savedUser.getId());
+      verify(refreshTokenRepository, times(1)).save(any(RefreshToken.class));
+    }
+
+    @Test
+    @DisplayName("oauth signUp success")
+    void signUp_OAuth_Success() {
+      // given
+      String tempToken = "temp-token";
+      UserDto.SignUpRequest request = UserDto.SignUpRequest.builder()
+          .temporaryToken(tempToken)
+          .birthDate(LocalDate.of(1990, 1, 1))
+          .phoneNumber("010-1234-5678")
+          .deviceId("device-1")
+          .build();
+
+      given(temporaryTokenResolver.isTokenValid(tempToken)).willReturn(true);
+      given(temporaryTokenResolver.getOAuthInfoFromTemporaryToken(tempToken))
+          .willReturn(OAuthInfo.ofSocial(AuthProvider.GOOGLE, "google-id"));
+      given(temporaryTokenResolver.getEmailFromTemporaryToken(tempToken))
+          .willReturn("google@example.com");
+      given(userRepository.existsByEmail(any(Email.class))).willReturn(false);
+
+      ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+      given(userRepository.save(userCaptor.capture())).willAnswer(invocation -> invocation.getArgument(0));
+
+      given(tokenProvider.generateToken(any(UUID.class), any(UserRole.class)))
+          .willReturn(UserDto.TokenResponse.builder()
+              .accessToken("access")
+              .refreshToken("refresh")
+              .build());
+
+      // when
+      UserDto.SignUpResponse response = userService.signUp(request);
+
+      // then
+      User savedUser = userCaptor.getValue();
+      assertThat(savedUser.getOAuthInfo().getProvider()).isEqualTo(AuthProvider.GOOGLE);
+      assertThat(response.getUser().getEmail()).isEqualTo("google@example.com");
+      assertThat(response.getTokens().getAccessToken()).isEqualTo("access");
       verify(userEventPublisher, times(1)).publishUserSignUpEvent(savedUser.getId());
     }
 
