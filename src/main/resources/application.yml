@@ -9,3 +9,7 @@ jwt:
   secret: ${JWT_SECRET:v6yB8eN2pL5fX9zW1qR4tG7hJ0kM3nB6v9yB8eN2pL5fX9zW1qR4tG7hJ0kM3nB6}
   access-token-expiration: 3600000 # 1 hour
   refresh-token-expiration: 1209600000 # 14 days
+
+app:
+  oauth2:
+    base-url: ${OAUTH_REDIRECT_URL:http://localhost:3000/oauth/callback}

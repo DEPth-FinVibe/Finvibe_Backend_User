@@ -21,12 +21,6 @@ public class AuthController {
         return ResponseEntity.ok(authCommandUseCase.login(request));
     }
 
-    @PostMapping("/oauth/login")
-    public ResponseEntity<UserDto.OAuthLoginResponse> oauthLogin(
-            @RequestBody UserDto.OAuthLoginRequest request) {
-        return ResponseEntity.ok(authCommandUseCase.oauthLogin(request));
-    }
-
     @PostMapping("/refresh")
     public ResponseEntity<UserDto.TokenRefreshResponse> refresh(
             @RequestBody UserDto.TokenRefreshRequest request) {

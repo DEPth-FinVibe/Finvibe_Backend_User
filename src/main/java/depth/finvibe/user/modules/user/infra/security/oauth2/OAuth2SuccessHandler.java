@@ -7,6 +7,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -21,6 +22,9 @@ import java.util.Map;
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final AuthCommandUseCase authCommandUseCase;
+
+    @Value("${app.oauth2.base-url}")
+    private String baseUrl;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -45,8 +49,6 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     }
 
     private String determineTargetUrl(UserDto.OAuthLoginResponse response) {
-        String baseUrl = "http://localhost:3000/oauth/callback";
-
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(baseUrl)
                 .queryParam("registration_required", response.isRegistrationRequired());
 
@@ -54,7 +56,9 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             builder.queryParam("temporary_token", response.getTemporaryToken());
         } else {
             builder.queryParam("access_token", response.getTokens().getAccessToken())
-                    .queryParam("refresh_token", response.getTokens().getRefreshToken());
+                    .queryParam("refresh_token", response.getTokens().getRefreshToken())
+                    .queryParam("access_expires_at", response.getTokens().getAccessExpiresAt())
+                    .queryParam("refresh_expires_at", response.getTokens().getRefreshExpiresAt());
         }
 
         return builder.build().toUriString();
