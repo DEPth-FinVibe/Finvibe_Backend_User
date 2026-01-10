@@ -16,45 +16,41 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
 
     private final StringRedisTemplate redisTemplate;
     private static final String REFRESH_TOKEN_PREFIX = "refresh_token:";
-    private static final String USER_DEVICE_PREFIX = "user_device_token:";
+    private static final String USER_TOKEN_PREFIX = "user_token:";
     private static final long REFRESH_TOKEN_TTL = 14; // 14 days
 
     @Override
     public void save(RefreshToken refreshToken) {
         String tokenKey = REFRESH_TOKEN_PREFIX + refreshToken.getToken();
-        String userDeviceKey = USER_DEVICE_PREFIX + refreshToken.getUserId() + ":" + refreshToken.getDeviceId();
+        String userKey = USER_TOKEN_PREFIX + refreshToken.getUserId();
         
-        String value = refreshToken.getUserId() + ":" + refreshToken.getDeviceId();
+        // 이전 토큰 삭제 (Single Session 보장)
+        String oldToken = redisTemplate.opsForValue().get(userKey);
+        if (oldToken != null) {
+            redisTemplate.delete(REFRESH_TOKEN_PREFIX + oldToken);
+        }
         
-        redisTemplate.opsForValue().set(tokenKey, value, REFRESH_TOKEN_TTL, TimeUnit.DAYS);
-        redisTemplate.opsForValue().set(userDeviceKey, refreshToken.getToken(), REFRESH_TOKEN_TTL, TimeUnit.DAYS);
+        redisTemplate.opsForValue().set(tokenKey, refreshToken.getUserId().toString(), REFRESH_TOKEN_TTL, TimeUnit.DAYS);
+        redisTemplate.opsForValue().set(userKey, refreshToken.getToken(), REFRESH_TOKEN_TTL, TimeUnit.DAYS);
     }
 
     @Override
     public Optional<RefreshToken> findByToken(String token) {
-        String value = redisTemplate.opsForValue().get(REFRESH_TOKEN_PREFIX + token);
-        if (value == null) {
+        String userIdStr = redisTemplate.opsForValue().get(REFRESH_TOKEN_PREFIX + token);
+        if (userIdStr == null) {
             return Optional.empty();
         }
         
-        String[] parts = value.split(":");
-        if (parts.length != 2) {
-            return Optional.empty();
-        }
-        
-        UUID userId = UUID.fromString(parts[0]);
-        String deviceId = parts[1];
-        
-        return Optional.of(RefreshToken.create(userId, deviceId, token));
+        return Optional.of(RefreshToken.create(UUID.fromString(userIdStr), token));
     }
 
     @Override
-    public void deleteByUserIdAndDeviceId(UUID userId, String deviceId) {
-        String userDeviceKey = USER_DEVICE_PREFIX + userId + ":" + deviceId;
-        String token = redisTemplate.opsForValue().get(userDeviceKey);
+    public void deleteByUserId(UUID userId) {
+        String userKey = USER_TOKEN_PREFIX + userId;
+        String token = redisTemplate.opsForValue().get(userKey);
         if (token != null) {
             redisTemplate.delete(REFRESH_TOKEN_PREFIX + token);
-            redisTemplate.delete(userDeviceKey);
+            redisTemplate.delete(userKey);
         }
     }
 }

@@ -37,29 +37,29 @@ public class AuthService implements AuthCommandUseCase {
 
     @Override
     @Transactional
-    public UserDto.TokenResponse login(String deviceId, UserDto.LoginRequest request) {
+    public UserDto.TokenResponse login(UserDto.LoginRequest request) {
         User user = userRepository.findByLoginId(new LoginId(request.getLoginId()))
                 .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
 
         user.validateLogin(request.getPassword(), passwordEncoder);
 
-        return completeLogin(user, deviceId);
+        return completeLogin(user);
     }
 
     @Override
     @Transactional
-    public UserDto.OAuthLoginResponse oauthLogin(String deviceId, UserDto.OAuthLoginRequest request) {
+    public UserDto.OAuthLoginResponse oauthLogin(UserDto.OAuthLoginRequest request) {
         OAuthInfo oAuthInfo = OAuthInfo.ofSocial(request.getProvider(), request.getProviderId());
 
         return userRepository.findByOAuthInfo(oAuthInfo)
-                .map(user -> handleExistingOAuthUser(user, deviceId))
+                .map(this::handleExistingOAuthUser)
                 .orElseGet(() -> handleNewOAuthUser(request));
     }
 
-    private UserDto.OAuthLoginResponse handleExistingOAuthUser(User user, String deviceId) {
+    private UserDto.OAuthLoginResponse handleExistingOAuthUser(User user) {
         user.validateActive();
         return UserDto.OAuthLoginResponse.builder()
-                .tokens(completeLogin(user, deviceId))
+                .tokens(completeLogin(user))
                 .registrationRequired(false)
                 .build();
     }
@@ -76,36 +76,32 @@ public class AuthService implements AuthCommandUseCase {
                 .build();
     }
 
-    private UserDto.TokenResponse completeLogin(User user, String deviceId) {
+    private UserDto.TokenResponse completeLogin(User user) {
         userEventPublisher.publishUserSignInEvent(user.getId());
         UserDto.TokenResponse tokenResponse = tokenProvider.generateToken(user.getId(), user.getRole());
-        storeRefreshToken(user.getId(), deviceId, tokenResponse.getRefreshToken());
+        storeRefreshToken(user.getId(), tokenResponse.getRefreshToken());
         return tokenResponse;
     }
 
     @Override
     @Transactional
-    public UserDto.TokenRefreshResponse refreshToken(String deviceId, UserDto.TokenRefreshRequest request) {
+    public UserDto.TokenRefreshResponse refreshToken(UserDto.TokenRefreshRequest request) {
         RefreshToken refreshToken = getValidRefreshToken(request.getRefreshToken());
         validateRefreshTokenOwner(refreshToken.getUserId());
 
-        if (!refreshToken.getDeviceId().equals(deviceId)) {
-            throw new DomainException(UserErrorCode.INVALID_REFRESH_TOKEN);
-        }
-
         UserDto.TokenRefreshResponse response = tokenProvider.refreshToken(request.getRefreshToken());
-        storeRefreshToken(refreshToken.getUserId(), deviceId, response.getRefreshToken());
+        storeRefreshToken(refreshToken.getUserId(), response.getRefreshToken());
         return response;
     }
 
     @Override
     @Transactional
-    public void logout(UUID userId, String deviceId) {
+    public void logout(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
 
         user.validateActive();
-        refreshTokenRepository.deleteByUserIdAndDeviceId(userId, deviceId);
+        refreshTokenRepository.deleteByUserId(userId);
     }
 
     private RefreshToken getValidRefreshToken(String refreshToken) {
@@ -124,12 +120,12 @@ public class AuthService implements AuthCommandUseCase {
         user.validateActive();
     }
 
-    private void storeRefreshToken(UUID userId, String deviceId, String refreshToken) {
+    private void storeRefreshToken(UUID userId, String refreshToken) {
         if (refreshToken == null) {
             return;
         }
 
-        refreshTokenRepository.deleteByUserIdAndDeviceId(userId, deviceId);
-        refreshTokenRepository.save(RefreshToken.create(userId, deviceId, refreshToken));
+        refreshTokenRepository.deleteByUserId(userId);
+        refreshTokenRepository.save(RefreshToken.create(userId, refreshToken));
     }
 }

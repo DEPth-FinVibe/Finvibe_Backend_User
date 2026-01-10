@@ -5,11 +5,11 @@ import java.util.UUID;
 import depth.finvibe.user.modules.user.dto.UserDto;
 
 public interface AuthCommandUseCase {
-    UserDto.TokenResponse login(String deviceId, UserDto.LoginRequest request);
+    UserDto.TokenResponse login(UserDto.LoginRequest request);
 
-    UserDto.OAuthLoginResponse oauthLogin(String deviceId, UserDto.OAuthLoginRequest request);
+    UserDto.OAuthLoginResponse oauthLogin(UserDto.OAuthLoginRequest request);
 
-    UserDto.TokenRefreshResponse refreshToken(String deviceId, UserDto.TokenRefreshRequest request);
+    UserDto.TokenRefreshResponse refreshToken(UserDto.TokenRefreshRequest request);
 
-    void logout(UUID userId, String deviceId);
+    void logout(UUID userId);
 }

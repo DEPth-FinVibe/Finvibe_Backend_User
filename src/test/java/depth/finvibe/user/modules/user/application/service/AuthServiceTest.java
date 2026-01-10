@@ -95,12 +95,12 @@ class AuthServiceTest {
               .build());
 
       // when
-      UserDto.TokenResponse response = authService.login("device-1", request);
+      UserDto.TokenResponse response = authService.login(request);
 
       // then
       assertThat(response.getAccessToken()).isEqualTo("token");
       verify(userEventPublisher, times(1)).publishUserSignInEvent(user.getId());
-      verify(refreshTokenRepository, times(1)).deleteByUserIdAndDeviceId(user.getId(), "device-1");
+      verify(refreshTokenRepository, times(1)).deleteByUserId(user.getId());
       verify(refreshTokenRepository, times(1)).save(any(RefreshToken.class));
     }
 
@@ -114,7 +114,7 @@ class AuthServiceTest {
       given(userRepository.findByLoginId(any(LoginId.class))).willReturn(Optional.empty());
 
       // when & then
-      assertThatThrownBy(() -> authService.login("device-1", request))
+      assertThatThrownBy(() -> authService.login(request))
           .isInstanceOf(DomainException.class)
           .extracting("errorCode")
           .isEqualTo(UserErrorCode.USER_NOT_FOUND);
@@ -148,7 +148,7 @@ class AuthServiceTest {
               .build());
 
       // when
-      UserDto.OAuthLoginResponse response = authService.oauthLogin("device-1", request);
+      UserDto.OAuthLoginResponse response = authService.oauthLogin(request);
 
       // then
       assertThat(response.isRegistrationRequired()).isFalse();
@@ -171,7 +171,7 @@ class AuthServiceTest {
           .willReturn("temp-token");
 
       // when
-      UserDto.OAuthLoginResponse response = authService.oauthLogin("device-1", request);
+      UserDto.OAuthLoginResponse response = authService.oauthLogin(request);
 
       // then
       assertThat(response.isRegistrationRequired()).isTrue();
@@ -189,13 +189,12 @@ class AuthServiceTest {
       // given
       UUID userId = UUID.randomUUID();
       String refreshToken = "refresh-token";
-      String deviceId = "device-1";
       String newRefreshToken = "new-refresh-token";
       UserDto.TokenRefreshRequest request = UserDto.TokenRefreshRequest.builder()
           .refreshToken(refreshToken)
           .build();
 
-      RefreshToken storedToken = RefreshToken.create(userId, deviceId, refreshToken);
+      RefreshToken storedToken = RefreshToken.create(userId, refreshToken);
       User user = User.builder()
           .id(userId)
           .isDeleted(false)
@@ -211,12 +210,12 @@ class AuthServiceTest {
               .build());
 
       // when
-      UserDto.TokenRefreshResponse response = authService.refreshToken(deviceId, request);
+      UserDto.TokenRefreshResponse response = authService.refreshToken(request);
 
       // then
       assertThat(response.getAccessToken()).isEqualTo("new-token");
       assertThat(response.getRefreshToken()).isEqualTo(newRefreshToken);
-      verify(refreshTokenRepository, times(1)).deleteByUserIdAndDeviceId(userId, deviceId);
+      verify(refreshTokenRepository, times(1)).deleteByUserId(userId);
       verify(refreshTokenRepository, times(1)).save(any(RefreshToken.class));
     }
 
@@ -232,7 +231,7 @@ class AuthServiceTest {
       given(tokenResolver.isTokenValid(refreshToken)).willReturn(false);
 
       // when & then
-      assertThatThrownBy(() -> authService.refreshToken("device-1", request))
+      assertThatThrownBy(() -> authService.refreshToken(request))
           .isInstanceOf(DomainException.class)
           .extracting("errorCode")
           .isEqualTo(UserErrorCode.INVALID_REFRESH_TOKEN);
@@ -251,7 +250,7 @@ class AuthServiceTest {
       given(refreshTokenRepository.findByToken(refreshToken)).willReturn(Optional.empty());
 
       // when & then
-      assertThatThrownBy(() -> authService.refreshToken("device-1", request))
+      assertThatThrownBy(() -> authService.refreshToken(request))
           .isInstanceOf(DomainException.class)
           .extracting("errorCode")
           .isEqualTo(UserErrorCode.INVALID_REFRESH_TOKEN);
@@ -266,7 +265,6 @@ class AuthServiceTest {
     void logout_Success() {
       // given
       UUID userId = UUID.randomUUID();
-      String deviceId = "device-1";
       User user = User.builder()
           .id(userId)
           .isDeleted(false)
@@ -275,10 +273,10 @@ class AuthServiceTest {
       given(userRepository.findById(userId)).willReturn(Optional.of(user));
 
       // when
-      authService.logout(userId, deviceId);
+      authService.logout(userId);
 
       // then
-      verify(refreshTokenRepository, times(1)).deleteByUserIdAndDeviceId(userId, deviceId);
+      verify(refreshTokenRepository, times(1)).deleteByUserId(userId);
     }
   }
 }

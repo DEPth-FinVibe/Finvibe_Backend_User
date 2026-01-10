@@ -10,5 +10,5 @@ public interface RefreshTokenRepository {
 
     Optional<RefreshToken> findByToken(String token);
 
-    void deleteByUserIdAndDeviceId(UUID userId, String deviceId);
+    void deleteByUserId(UUID userId);
 }

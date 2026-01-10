@@ -46,7 +46,7 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
 
         userEventPublisher.publishUserSignUpEvent(savedUser.getId());
         
-        UserDto.TokenResponse tokens = completeLogin(savedUser, request.getDeviceId());
+        UserDto.TokenResponse tokens = completeLogin(savedUser);
 
         return UserDto.SignUpResponse.builder()
                 .user(UserDto.UserResponse.from(savedUser))
@@ -76,18 +76,18 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
         return userRepository.save(user);
     }
 
-    private UserDto.TokenResponse completeLogin(User user, String deviceId) {
+    private UserDto.TokenResponse completeLogin(User user) {
         UserDto.TokenResponse tokenResponse = tokenProvider.generateToken(user.getId(), user.getRole());
-        storeRefreshToken(user.getId(), deviceId, tokenResponse.getRefreshToken());
+        storeRefreshToken(user.getId(), tokenResponse.getRefreshToken());
         return tokenResponse;
     }
 
-    private void storeRefreshToken(UUID userId, String deviceId, String refreshToken) {
-        if (refreshToken == null || deviceId == null) {
+    private void storeRefreshToken(UUID userId, String refreshToken) {
+        if (refreshToken == null) {
             return;
         }
-        refreshTokenRepository.deleteByUserIdAndDeviceId(userId, deviceId);
-        refreshTokenRepository.save(RefreshToken.create(userId, deviceId, refreshToken));
+        refreshTokenRepository.deleteByUserId(userId);
+        refreshTokenRepository.save(RefreshToken.create(userId, refreshToken));
     }
 
     @Override

@@ -89,7 +89,6 @@ class UserServiceTest {
           .email("test@example.com")
           .birthDate(LocalDate.of(1990, 1, 1))
           .phoneNumber("010-1234-5678")
-          .deviceId("device-1")
           .build();
 
       given(userRepository.existsByEmail(any(Email.class))).willReturn(false);
@@ -113,6 +112,7 @@ class UserServiceTest {
       assertThat(response.getUser().getUserId()).isEqualTo(savedUser.getId());
       assertThat(response.getTokens().getAccessToken()).isEqualTo("access");
       verify(userEventPublisher, times(1)).publishUserSignUpEvent(savedUser.getId());
+      verify(refreshTokenRepository, times(1)).deleteByUserId(any(UUID.class));
       verify(refreshTokenRepository, times(1)).save(any(RefreshToken.class));
     }
 
@@ -125,7 +125,6 @@ class UserServiceTest {
           .temporaryToken(tempToken)
           .birthDate(LocalDate.of(1990, 1, 1))
           .phoneNumber("010-1234-5678")
-          .deviceId("device-1")
           .build();
 
       given(temporaryTokenResolver.isTokenValid(tempToken)).willReturn(true);

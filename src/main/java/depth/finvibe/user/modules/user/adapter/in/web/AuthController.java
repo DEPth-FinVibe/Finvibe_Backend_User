@@ -17,30 +17,26 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<UserDto.TokenResponse> login(
-            @RequestHeader("X-Device-Id") String deviceId,
             @RequestBody UserDto.LoginRequest request) {
-        return ResponseEntity.ok(authCommandUseCase.login(deviceId, request));
+        return ResponseEntity.ok(authCommandUseCase.login(request));
     }
 
     @PostMapping("/oauth/login")
     public ResponseEntity<UserDto.OAuthLoginResponse> oauthLogin(
-            @RequestHeader("X-Device-Id") String deviceId,
             @RequestBody UserDto.OAuthLoginRequest request) {
-        return ResponseEntity.ok(authCommandUseCase.oauthLogin(deviceId, request));
+        return ResponseEntity.ok(authCommandUseCase.oauthLogin(request));
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<UserDto.TokenRefreshResponse> refresh(
-            @RequestHeader("X-Device-Id") String deviceId,
             @RequestBody UserDto.TokenRefreshRequest request) {
-        return ResponseEntity.ok(authCommandUseCase.refreshToken(deviceId, request));
+        return ResponseEntity.ok(authCommandUseCase.refreshToken(request));
     }
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
-            @RequestHeader("X-Device-Id") String deviceId,
             @RequestParam UUID userId) {
-        authCommandUseCase.logout(userId, deviceId);
+        authCommandUseCase.logout(userId);
         return ResponseEntity.noContent().build();
     }
 }

@@ -26,7 +26,6 @@ public class UserDto {
         private final String phoneNumber;
         private final boolean isDeleted;
         private final String temporaryToken;
-        private final String deviceId;
     }
 
     @Getter
