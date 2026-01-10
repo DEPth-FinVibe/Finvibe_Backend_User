@@ -36,6 +36,9 @@ public class JwtTemporaryTokenProvider implements TemporaryTokenProvider, Tempor
 
     @Override
     public String generateTemporaryToken(AuthProvider provider, String providerId, String email) {
+        if (provider == null) {
+            throw new IllegalArgumentException("AuthProvider must not be null");
+        }
         Date now = new Date();
         Date expiry = new Date(now.getTime() + temporaryTokenExpiration);
 

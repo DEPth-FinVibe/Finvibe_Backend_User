@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -31,10 +32,12 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                                         Authentication authentication) throws IOException, ServletException {
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         Map<String, Object> attributes = oAuth2User.getAttributes();
+        String registrationId = ((OAuth2AuthenticationToken) authentication).getAuthorizedClientRegistrationId();
 
-        AuthProvider provider = (AuthProvider) attributes.get("provider");
-        String providerId = (String) attributes.get("providerId");
-        String email = (String) attributes.get("email");
+        OAuth2UserInfo userInfo = OAuth2UserInfo.of(registrationId, attributes);
+        AuthProvider provider = userInfo.getProvider();
+        String providerId = userInfo.getProviderId();
+        String email = userInfo.getEmail();
 
         UserDto.OAuthLoginRequest loginRequest = UserDto.OAuthLoginRequest.builder()
                 .provider(provider)
