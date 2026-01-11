@@ -24,6 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
@@ -54,10 +55,28 @@ public class GlobalExceptionHandler {
       MissingPathVariableException.class
   })
   public ResponseEntity<ErrorResponse> handleBadRequest(Exception ex) {
+    List<FieldErrorResponse> fieldErrors = null;
+    if (ex instanceof MethodArgumentNotValidException manvEx) {
+      fieldErrors = manvEx.getBindingResult().getFieldErrors().stream()
+          .map(error -> FieldErrorResponse.of(error.getField(), error.getDefaultMessage()))
+          .collect(Collectors.toList());
+    } else if (ex instanceof BindException bindEx) {
+      fieldErrors = bindEx.getBindingResult().getFieldErrors().stream()
+          .map(error -> FieldErrorResponse.of(error.getField(), error.getDefaultMessage()))
+          .collect(Collectors.toList());
+    } else if (ex instanceof ConstraintViolationException cvEx) {
+      fieldErrors = cvEx.getConstraintViolations().stream()
+          .map(violation -> FieldErrorResponse.of(
+              violation.getPropertyPath().toString(),
+              violation.getMessage()))
+          .collect(Collectors.toList());
+    }
+
     ErrorResponse body = ErrorResponse.of(
         HttpStatus.BAD_REQUEST.value(),
         GlobalErrorCode.INVALID_REQUEST.getCode(),
-        GlobalErrorCode.INVALID_REQUEST.getMessage()
+        GlobalErrorCode.INVALID_REQUEST.getMessage(),
+        fieldErrors
     );
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
   }
