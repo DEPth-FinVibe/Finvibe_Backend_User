@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class OAuthInfo {
     @Enumerated(EnumType.STRING)
-    @Column(name = "provider", nullable = false)
+    @Column(name = "provider")
     private AuthProvider provider;
 
     @Column(name = "provider_id")
