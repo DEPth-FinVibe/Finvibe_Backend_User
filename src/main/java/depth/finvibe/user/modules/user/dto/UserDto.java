@@ -7,6 +7,11 @@ import java.util.UUID;
 import depth.finvibe.user.modules.user.domain.InterestStock;
 import depth.finvibe.user.modules.user.domain.User;
 import depth.finvibe.user.modules.user.domain.enums.AuthProvider;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.Pattern;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,14 +26,19 @@ public class UserDto {
     @NoArgsConstructor(access = AccessLevel.PROTECTED)
     @AllArgsConstructor
     public static class SignUpRequest {
-        private UUID userId;
+        @NotEmpty
         private String loginId;
+        @NotEmpty
         private String password;
+        @Email
+        @NotEmpty
         private String email;
+        @NotNull
+        @Past
         private LocalDate birthDate;
+        @Pattern(regexp = "^010-\\d{4}-\\d{4}$")
         private String phoneNumber;
-        private boolean isDeleted;
-        private String temporaryToken;
+        private String temporaryToken; //Nullable (OAuth)
     }
 
     @Getter
