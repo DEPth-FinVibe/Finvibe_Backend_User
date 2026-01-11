@@ -5,6 +5,8 @@ import java.util.UUID;
 import depth.finvibe.user.modules.user.dto.UserDto;
 
 public interface AuthCommandUseCase {
+    UserDto.SignUpResponse signUp(UserDto.SignUpRequest request);
+
     UserDto.TokenResponse login(UserDto.LoginRequest request);
 
     UserDto.OAuthLoginResponse oauthLogin(UserDto.OAuthLoginRequest request);

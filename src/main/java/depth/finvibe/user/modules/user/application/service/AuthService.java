@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import depth.finvibe.user.modules.user.application.port.in.AuthCommandUseCase;
 import depth.finvibe.user.modules.user.application.port.out.RefreshTokenRepository;
 import depth.finvibe.user.modules.user.application.port.out.TemporaryTokenProvider;
+import depth.finvibe.user.modules.user.application.port.out.TemporaryTokenResolver;
 import depth.finvibe.user.modules.user.application.port.out.TokenProvider;
 import depth.finvibe.user.modules.user.application.port.out.TokenResolver;
 import depth.finvibe.user.modules.user.application.port.out.UserEventPublisher;
@@ -16,6 +17,7 @@ import depth.finvibe.user.modules.user.application.port.out.UserRepository;
 import depth.finvibe.user.modules.user.domain.RefreshToken;
 import depth.finvibe.user.modules.user.domain.User;
 import depth.finvibe.user.modules.user.domain.error.UserErrorCode;
+import depth.finvibe.user.modules.user.domain.vo.Email;
 import depth.finvibe.user.modules.user.domain.vo.LoginId;
 import depth.finvibe.user.modules.user.domain.vo.OAuthInfo;
 import depth.finvibe.user.modules.user.dto.UserDto;
@@ -34,6 +36,46 @@ public class AuthService implements AuthCommandUseCase {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final TemporaryTokenProvider temporaryTokenProvider;
+    private final TemporaryTokenResolver temporaryTokenResolver;
+
+    @Override
+    @Transactional
+    public UserDto.SignUpResponse signUp(UserDto.SignUpRequest request) {
+        User savedUser = (request.getTemporaryToken() != null && !request.getTemporaryToken().isBlank())
+                ? signUpWithOAuth(request)
+                : signUpWithLocal(request);
+
+        userEventPublisher.publishUserSignUpEvent(savedUser.getId());
+
+        UserDto.TokenResponse tokens = issueTokens(savedUser);
+
+        return UserDto.SignUpResponse.builder()
+                .user(UserDto.UserResponse.from(savedUser))
+                .tokens(tokens)
+                .build();
+    }
+
+    private User signUpWithLocal(UserDto.SignUpRequest request) {
+        checkUserAlreadyExist(request);
+        User user = createUserFromSignUpRequest(request);
+        return userRepository.save(user);
+    }
+
+    private User signUpWithOAuth(UserDto.SignUpRequest request) {
+        if (!temporaryTokenResolver.isTokenValid(request.getTemporaryToken())) {
+            throw new DomainException(UserErrorCode.INVALID_TEMPORARY_TOKEN);
+        }
+
+        OAuthInfo oAuthInfo = temporaryTokenResolver.getOAuthInfoFromTemporaryToken(request.getTemporaryToken());
+        String email = temporaryTokenResolver.getEmailFromTemporaryToken(request.getTemporaryToken());
+
+        if (userRepository.existsByEmail(new Email(email))) {
+            throw new DomainException(UserErrorCode.EMAIL_ALREADY_EXISTS);
+        }
+
+        User user = User.createSocial(oAuthInfo, email, request.getBirthDate(), request.getPhoneNumber());
+        return userRepository.save(user);
+    }
 
     @Override
     @Transactional
@@ -78,9 +120,7 @@ public class AuthService implements AuthCommandUseCase {
 
     private UserDto.TokenResponse completeLogin(User user) {
         userEventPublisher.publishUserSignInEvent(user.getId());
-        UserDto.TokenResponse tokenResponse = tokenProvider.generateToken(user.getId(), user.getRole());
-        storeRefreshToken(user.getId(), tokenResponse.getRefreshToken());
-        return tokenResponse;
+        return issueTokens(user);
     }
 
     @Override
@@ -127,5 +167,26 @@ public class AuthService implements AuthCommandUseCase {
 
         refreshTokenRepository.deleteByUserId(userId);
         refreshTokenRepository.save(RefreshToken.create(userId, refreshToken));
+    }
+
+    private void checkUserAlreadyExist(UserDto.SignUpRequest request) {
+        if (userRepository.existsByEmail(new Email(request.getEmail()))) {
+            throw new DomainException(UserErrorCode.EMAIL_ALREADY_EXISTS);
+        }
+
+        if (userRepository.existsByLoginId(new LoginId(request.getLoginId()))) {
+            throw new DomainException(UserErrorCode.LOGIN_ID_ALREADY_EXISTS);
+        }
+    }
+
+    private User createUserFromSignUpRequest(UserDto.SignUpRequest request) {
+        return User.create(request.getLoginId(), request.getPassword(), request.getEmail(), request.getBirthDate(),
+                request.getPhoneNumber(), passwordEncoder);
+    }
+
+    private UserDto.TokenResponse issueTokens(User user) {
+        UserDto.TokenResponse tokenResponse = tokenProvider.generateToken(user.getId(), user.getRole());
+        storeRefreshToken(user.getId(), tokenResponse.getRefreshToken());
+        return tokenResponse;
     }
 }

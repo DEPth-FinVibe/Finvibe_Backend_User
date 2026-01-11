@@ -19,7 +19,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -27,20 +26,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import depth.finvibe.user.modules.user.application.port.out.InterestStockRepository;
 import depth.finvibe.user.modules.user.application.port.out.MarketClient;
-import depth.finvibe.user.modules.user.application.port.out.RefreshTokenRepository;
-import depth.finvibe.user.modules.user.application.port.out.TemporaryTokenResolver;
-import depth.finvibe.user.modules.user.application.port.out.TokenProvider;
-import depth.finvibe.user.modules.user.application.port.out.UserEventPublisher;
 import depth.finvibe.user.modules.user.application.port.out.UserRepository;
 import depth.finvibe.user.modules.user.domain.InterestStock;
-import depth.finvibe.user.modules.user.domain.RefreshToken;
 import depth.finvibe.user.modules.user.domain.User;
-import depth.finvibe.user.modules.user.domain.enums.AuthProvider;
 import depth.finvibe.user.modules.user.domain.enums.UserRole;
 import depth.finvibe.user.modules.user.domain.error.UserErrorCode;
 import depth.finvibe.user.modules.user.domain.vo.Email;
 import depth.finvibe.user.modules.user.domain.vo.LoginId;
-import depth.finvibe.user.modules.user.domain.vo.OAuthInfo;
 import depth.finvibe.user.modules.user.domain.vo.PhoneNumber;
 import depth.finvibe.user.modules.user.dto.UserDto;
 import depth.finvibe.user.shared.dto.Requester;
@@ -59,136 +51,10 @@ class UserServiceTest {
   private InterestStockRepository interestStockRepository;
 
   @Mock
-  private UserEventPublisher userEventPublisher;
-
-  @Mock
   private MarketClient marketClient;
 
   @Mock
   private PasswordEncoder passwordEncoder;
-
-  @Mock
-  private TemporaryTokenResolver temporaryTokenResolver;
-
-  @Mock
-  private TokenProvider tokenProvider;
-
-  @Mock
-  private RefreshTokenRepository refreshTokenRepository;
-
-  @Nested
-  @DisplayName("signUp")
-  class SignUpTest {
-    @Test
-    @DisplayName("local signUp success")
-    void signUp_Local_Success() {
-      // given
-      UserDto.SignUpRequest request = UserDto.SignUpRequest.builder()
-          .loginId("user123")
-          .password("password")
-          .email("test@example.com")
-          .birthDate(LocalDate.of(1990, 1, 1))
-          .phoneNumber("010-1234-5678")
-          .build();
-
-      given(userRepository.existsByEmail(any(Email.class))).willReturn(false);
-      given(userRepository.existsByLoginId(any(LoginId.class))).willReturn(false);
-      given(passwordEncoder.encode(anyString())).willReturn("encoded");
-
-      ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-      given(userRepository.save(userCaptor.capture())).willAnswer(invocation -> invocation.getArgument(0));
-
-      given(tokenProvider.generateToken(any(UUID.class), any(UserRole.class)))
-          .willReturn(UserDto.TokenResponse.builder()
-              .accessToken("access")
-              .refreshToken("refresh")
-              .build());
-
-      // when
-      UserDto.SignUpResponse response = userService.signUp(request);
-
-      // then
-      User savedUser = userCaptor.getValue();
-      assertThat(response.getUser().getUserId()).isEqualTo(savedUser.getId());
-      assertThat(response.getTokens().getAccessToken()).isEqualTo("access");
-      verify(userEventPublisher, times(1)).publishUserSignUpEvent(savedUser.getId());
-      verify(refreshTokenRepository, times(1)).deleteByUserId(any(UUID.class));
-      verify(refreshTokenRepository, times(1)).save(any(RefreshToken.class));
-    }
-
-    @Test
-    @DisplayName("oauth signUp success")
-    void signUp_OAuth_Success() {
-      // given
-      String tempToken = "temp-token";
-      UserDto.SignUpRequest request = UserDto.SignUpRequest.builder()
-          .temporaryToken(tempToken)
-          .birthDate(LocalDate.of(1990, 1, 1))
-          .phoneNumber("010-1234-5678")
-          .build();
-
-      given(temporaryTokenResolver.isTokenValid(tempToken)).willReturn(true);
-      given(temporaryTokenResolver.getOAuthInfoFromTemporaryToken(tempToken))
-          .willReturn(OAuthInfo.ofSocial(AuthProvider.GOOGLE, "google-id"));
-      given(temporaryTokenResolver.getEmailFromTemporaryToken(tempToken))
-          .willReturn("google@example.com");
-      given(userRepository.existsByEmail(any(Email.class))).willReturn(false);
-
-      ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-      given(userRepository.save(userCaptor.capture())).willAnswer(invocation -> invocation.getArgument(0));
-
-      given(tokenProvider.generateToken(any(UUID.class), any(UserRole.class)))
-          .willReturn(UserDto.TokenResponse.builder()
-              .accessToken("access")
-              .refreshToken("refresh")
-              .build());
-
-      // when
-      UserDto.SignUpResponse response = userService.signUp(request);
-
-      // then
-      User savedUser = userCaptor.getValue();
-      assertThat(savedUser.getOauthInfo().getProvider()).isEqualTo(AuthProvider.GOOGLE);
-      assertThat(response.getUser().getEmail()).isEqualTo("google@example.com");
-      assertThat(response.getTokens().getAccessToken()).isEqualTo("access");
-      verify(userEventPublisher, times(1)).publishUserSignUpEvent(savedUser.getId());
-    }
-
-    @Test
-    @DisplayName("email already exists")
-    void signUp_Fail_EmailExists() {
-      // given
-      UserDto.SignUpRequest request = UserDto.SignUpRequest.builder()
-          .loginId("user123")
-          .email("test@example.com")
-          .build();
-      given(userRepository.existsByEmail(any(Email.class))).willReturn(true);
-
-      // when & then
-      assertThatThrownBy(() -> userService.signUp(request))
-          .isInstanceOf(DomainException.class)
-          .extracting("errorCode")
-          .isEqualTo(UserErrorCode.EMAIL_ALREADY_EXISTS);
-    }
-
-    @Test
-    @DisplayName("loginId already exists")
-    void signUp_Fail_LoginIdExists() {
-      // given
-      UserDto.SignUpRequest request = UserDto.SignUpRequest.builder()
-          .loginId("user123")
-          .email("test@example.com")
-          .build();
-      given(userRepository.existsByEmail(any(Email.class))).willReturn(false);
-      given(userRepository.existsByLoginId(any(LoginId.class))).willReturn(true);
-
-      // when & then
-      assertThatThrownBy(() -> userService.signUp(request))
-          .isInstanceOf(DomainException.class)
-          .extracting("errorCode")
-          .isEqualTo(UserErrorCode.LOGIN_ID_ALREADY_EXISTS);
-    }
-  }
 
   @Nested
   @DisplayName("update")

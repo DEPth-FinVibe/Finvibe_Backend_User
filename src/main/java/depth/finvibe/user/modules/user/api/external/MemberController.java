@@ -25,11 +25,6 @@ public class MemberController {
     private final UserCommandUseCase userCommandUseCase;
     private final UserQueryUseCase userQueryUseCase;
 
-    @PostMapping
-    public UserDto.SignUpResponse signUp(@RequestBody UserDto.SignUpRequest request) {
-        return userCommandUseCase.signUp(request);
-    }
-
     @GetMapping("/me")
     public UserDto.UserResponse getMe(@AuthenticatedUser Requester requester) {
         return userQueryUseCase.getMe(requester.getUserId());

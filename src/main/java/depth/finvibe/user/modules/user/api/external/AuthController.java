@@ -22,6 +22,11 @@ public class AuthController {
         return authCommandUseCase.login(request);
     }
 
+    @PostMapping("/signup")
+    public UserDto.SignUpResponse signUp(@RequestBody UserDto.SignUpRequest request) {
+        return authCommandUseCase.signUp(request);
+    }
+
     @PostMapping("/refresh")
     public UserDto.TokenRefreshResponse refreshToken(@RequestBody UserDto.TokenRefreshRequest request) {
         return authCommandUseCase.refreshToken(request);

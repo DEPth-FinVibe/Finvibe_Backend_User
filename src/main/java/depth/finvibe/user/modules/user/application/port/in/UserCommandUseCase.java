@@ -6,8 +6,6 @@ import depth.finvibe.user.modules.user.dto.UserDto;
 import depth.finvibe.user.shared.dto.Requester;
 
 public interface UserCommandUseCase {
-    UserDto.SignUpResponse signUp(UserDto.SignUpRequest request);
-
     UserDto.UserResponse update(UUID userId, UserDto.UpdateUserRequest request, Requester requester);
 
     UserDto.FavoriteStockResponse addFavoriteStock(UUID userId, Long stockId, Requester requester);
