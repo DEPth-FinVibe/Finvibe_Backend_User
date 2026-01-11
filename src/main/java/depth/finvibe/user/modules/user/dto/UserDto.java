@@ -106,6 +106,7 @@ public class UserDto {
     @NoArgsConstructor(access = AccessLevel.PROTECTED)
     @AllArgsConstructor
     public static class TokenRefreshRequest {
+        @NotEmpty
         private String refreshToken;
     }
 
