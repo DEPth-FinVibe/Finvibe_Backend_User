@@ -1,103 +1,124 @@
 package depth.finvibe.user.modules.user.dto;
 
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.UUID;
+
 import depth.finvibe.user.modules.user.domain.InterestStock;
 import depth.finvibe.user.modules.user.domain.User;
 import depth.finvibe.user.modules.user.domain.enums.AuthProvider;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.util.UUID;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserDto {
 
     @Getter
     @Builder
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor
     public static class SignUpRequest {
-        private final UUID userId;
-        private final String loginId;
-        private final String password;
-        private final String email;
-        private final LocalDate birthDate;
-        private final String phoneNumber;
-        private final boolean isDeleted;
-        private final String temporaryToken;
+        private UUID userId;
+        private String loginId;
+        private String password;
+        private String email;
+        private LocalDate birthDate;
+        private String phoneNumber;
+        private boolean isDeleted;
+        private String temporaryToken;
     }
 
     @Getter
     @Builder
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor
     public static class SignUpResponse {
-        private final UserResponse user;
-        private final TokenResponse tokens;
+        private UserResponse user;
+        private TokenResponse tokens;
     }
 
     @Getter
     @Builder
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor
     public static class LoginRequest {
-        private final String loginId;
-        private final String password;
+        private String loginId;
+        private String password;
     }
 
     @Getter
     @Builder
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor
     public static class OAuthLoginRequest {
-        private final AuthProvider provider;
-        private final String providerId;
-        private final String email;
+        private AuthProvider provider;
+        private String providerId;
+        private String email;
     }
 
     @Getter
     @Builder
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor
     public static class OAuthLoginResponse {
-        private final TokenResponse tokens;
-        private final String temporaryToken;
-        private final boolean registrationRequired;
+        private TokenResponse tokens;
+        private String temporaryToken;
+        private boolean registrationRequired;
     }
 
     @Getter
     @Builder
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor
     public static class UpdateUserRequest {
-        private final String loginId;
-        private final String password;
-        private final LocalDate birthDate;
-        private final String phoneNumber;
+        private String loginId;
+        private String password;
+        private LocalDate birthDate;
+        private String phoneNumber;
     }
 
     @Getter
     @Builder
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor
     public static class TokenResponse {
-        private final String accessToken;
-        private final OffsetDateTime accessExpiresAt;
-        private final String refreshToken;
-        private final OffsetDateTime refreshExpiresAt;
+        private String accessToken;
+        private OffsetDateTime accessExpiresAt;
+        private String refreshToken;
+        private OffsetDateTime refreshExpiresAt;
     }
 
     @Getter
     @Builder
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor
     public static class TokenRefreshRequest {
-        private final String refreshToken;
+        private String refreshToken;
     }
 
     @Getter
     @Builder
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor
     public static class TokenRefreshResponse {
-        private final String accessToken;
-        private final OffsetDateTime accessExpiresAt;
-        private final String refreshToken;
-        private final OffsetDateTime refreshExpiresAt;
+        private String accessToken;
+        private OffsetDateTime accessExpiresAt;
+        private String refreshToken;
+        private OffsetDateTime refreshExpiresAt;
     }
 
     @Getter
     @Builder
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor
     public static class UserResponse {
-        private final UUID userId;
-        private final String email;
-        private final LocalDate birthDate;
-        private final String phoneNumber;
+        private UUID userId;
+        private String email;
+        private LocalDate birthDate;
+        private String phoneNumber;
 
         public static UserResponse from(User user) {
             return UserResponse.builder()
@@ -111,10 +132,12 @@ public class UserDto {
 
     @Getter
     @Builder
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor
     public static class FavoriteStockResponse {
-        private final Long stockId;
-        private final String name;
-        private final UUID userId;
+        private Long stockId;
+        private String name;
+        private UUID userId;
 
         public static FavoriteStockResponse from(InterestStock interestStock) {
             return FavoriteStockResponse.builder()
