@@ -24,6 +24,9 @@ public class JwtTemporaryTokenProvider implements TemporaryTokenProvider, Tempor
     @Value("${jwt.secret}")
     private String secretKey;
 
+    @Value("${jwt.issuer}")
+    private String issuer;
+
     @Value("${jwt.access-token-expiration}")
     private long temporaryTokenExpiration;
 
@@ -43,6 +46,7 @@ public class JwtTemporaryTokenProvider implements TemporaryTokenProvider, Tempor
         Date expiry = new Date(now.getTime() + temporaryTokenExpiration);
 
         return Jwts.builder()
+                .issuer(issuer)
                 .claim(CLAIM_PROVIDER, provider.name())
                 .claim(CLAIM_PROVIDER_ID, providerId)
                 .claim(CLAIM_EMAIL, email)

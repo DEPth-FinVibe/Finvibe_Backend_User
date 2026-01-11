@@ -26,6 +26,9 @@ public class JwtTokenProvider implements TokenProvider, TokenResolver {
     @Value("${jwt.secret}")
     private String secretKey;
 
+    @Value("${jwt.issuer}")
+    private String issuer;
+
     @Value("${jwt.access-token-expiration}")
     private long accessTokenExpiration;
 
@@ -95,6 +98,7 @@ public class JwtTokenProvider implements TokenProvider, TokenResolver {
 
         return Jwts.builder()
                 .subject(userId.toString())
+                .issuer(issuer)
                 .claim(CLAIM_ID, userId.toString())
                 .claim(CLAIM_ROLE, role.name())
                 .issuedAt(now)
