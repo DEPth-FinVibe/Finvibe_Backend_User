@@ -1,0 +1,44 @@
+package depth.finvibe.user.modules.user.infra.error;
+
+import depth.finvibe.user.modules.user.domain.error.UserErrorCode;
+import depth.finvibe.user.shared.error.DomainErrorCode;
+import depth.finvibe.user.shared.infra.error.DomainErrorHttpMapper;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.stereotype.Component;
+
+@Component
+public class UserErrorHttpMapper implements DomainErrorHttpMapper {
+
+  @Override
+  public boolean supports(DomainErrorCode code) {
+    return code instanceof UserErrorCode;
+  }
+
+  @Override
+  public HttpStatusCode toStatus(DomainErrorCode code) {
+    UserErrorCode userCode = (UserErrorCode) code;
+    return switch (userCode) {
+      case INVALID_PHONE_NUMBER_PARAMS,
+          INVALID_EMAIL_FORMAT,
+          INVALID_LOGIN_ID_FORMAT -> HttpStatus.BAD_REQUEST;
+
+      case INVALID_PASSWORD,
+          INVALID_REFRESH_TOKEN,
+          INVALID_TEMPORARY_TOKEN -> HttpStatus.UNAUTHORIZED;
+
+      case UNAUTHORIZED_USER_UPDATE,
+          UNAUTHORIZED_INTEREST_STOCK_DELETION,
+          UNAUTHORIZED_INTEREST_STOCK_CREATION,
+          USER_DELETED -> HttpStatus.FORBIDDEN;
+
+      case USER_NOT_FOUND,
+          INTEREST_STOCK_NOT_FOUND,
+          MARKET_DATA_NOT_FOUND -> HttpStatus.NOT_FOUND;
+
+      case EMAIL_ALREADY_EXISTS,
+          LOGIN_ID_ALREADY_EXISTS,
+          INTEREST_STOCK_ALREADY_EXISTS -> HttpStatus.CONFLICT;
+    };
+  }
+}
