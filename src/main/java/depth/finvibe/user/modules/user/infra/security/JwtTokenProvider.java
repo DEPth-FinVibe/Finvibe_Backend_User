@@ -103,7 +103,7 @@ public class JwtTokenProvider implements TokenProvider, TokenResolver {
                 .claim(CLAIM_ROLE, role.name())
                 .issuedAt(now)
                 .expiration(expiryDate)
-                .signWith(key)
+                .signWith(key, Jwts.SIG.HS256)
                 .compact();
     }
 

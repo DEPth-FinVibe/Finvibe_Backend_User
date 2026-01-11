@@ -52,7 +52,7 @@ public class JwtTemporaryTokenProvider implements TemporaryTokenProvider, Tempor
                 .claim(CLAIM_EMAIL, email)
                 .issuedAt(now)
                 .expiration(expiry)
-                .signWith(key)
+                .signWith(key, Jwts.SIG.HS256)
                 .compact();
     }
 
