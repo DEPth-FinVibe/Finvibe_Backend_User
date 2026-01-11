@@ -26,10 +26,6 @@ spring:
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
-    consumer:
-      group-id: finvibe-investment-group
-      properties:
-        spring.json.trusted.packages: "depth.finvibe.investment.*"
 
 logging:
   level:
