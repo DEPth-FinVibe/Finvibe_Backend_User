@@ -5,6 +5,7 @@ import depth.finvibe.user.shared.error.DomainException;
 import depth.finvibe.user.shared.error.GlobalErrorCode;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,7 @@ import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.util.List;
 
+@Slf4j
 @RestControllerAdvice
 @RequiredArgsConstructor
 public class GlobalExceptionHandler {
@@ -119,6 +121,9 @@ public class GlobalExceptionHandler {
         GlobalErrorCode.INTERNAL_SERVER_ERROR.getCode(),
         GlobalErrorCode.INTERNAL_SERVER_ERROR.getMessage()
     );
+
+    log.error("Unhandled exception occurred: ", ex);
+
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
   }
 
