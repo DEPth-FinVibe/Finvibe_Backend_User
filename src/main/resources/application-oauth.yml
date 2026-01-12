@@ -32,7 +32,6 @@ spring:
             scope:
               - openid
               - profile_nickname
-              - account_email
             redirect-uri: "${OAUTH_BASE_URI}/login/oauth2/code/{registrationId}"
         provider:
           google:
