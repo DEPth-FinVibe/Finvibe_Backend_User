@@ -47,16 +47,17 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         UserDto.OAuthLoginResponse loginResponse = authCommandUseCase.oauthLogin(loginRequest);
 
-        String targetUrl = determineTargetUrl(loginResponse);
+        String targetUrl = determineTargetUrl(loginResponse, email);
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 
-    private String determineTargetUrl(UserDto.OAuthLoginResponse response) {
+    private String determineTargetUrl(UserDto.OAuthLoginResponse response, String email) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(baseUrl)
                 .queryParam("registration_required", response.isRegistrationRequired());
 
         if (response.isRegistrationRequired()) {
-            builder.queryParam("temporary_token", response.getTemporaryToken());
+            builder.queryParam("temporary_token", response.getTemporaryToken())
+                    .queryParam("email", email);
         } else {
             builder.queryParam("access_token", response.getTokens().getAccessToken())
                     .queryParam("refresh_token", response.getTokens().getRefreshToken())
