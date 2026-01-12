@@ -38,6 +38,8 @@ import depth.finvibe.user.modules.user.domain.vo.Email;
 import depth.finvibe.user.modules.user.domain.vo.LoginId;
 import depth.finvibe.user.modules.user.domain.vo.OAuthInfo;
 import depth.finvibe.user.modules.user.domain.vo.PasswordHash;
+import depth.finvibe.user.modules.user.domain.vo.PersonalDetails;
+import depth.finvibe.user.modules.user.domain.vo.PhoneNumber;
 import depth.finvibe.user.modules.user.dto.UserDto;
 import depth.finvibe.user.shared.error.DomainException;
 
@@ -82,6 +84,8 @@ class AuthServiceTest {
           .loginId("user123")
           .password("password")
           .email("test@example.com")
+          .name("홍길동")
+          .nickname("길동이")
           .birthDate(LocalDate.of(1990, 1, 1))
           .phoneNumber("010-1234-5678")
           .build();
@@ -94,8 +98,11 @@ class AuthServiceTest {
           request.getLoginId(),
           request.getPassword(),
           request.getEmail(),
-          request.getBirthDate(),
-          request.getPhoneNumber(),
+          PersonalDetails.of(
+              PhoneNumber.parse(request.getPhoneNumber()),
+              request.getBirthDate(),
+              request.getName(),
+              request.getNickname()),
           passwordEncoder);
 
       given(userRepository.save(any(User.class))).willReturn(savedUser);
@@ -114,46 +121,6 @@ class AuthServiceTest {
       verify(userEventPublisher, times(1)).publishUserSignUpEvent(savedUser.getId());
       verify(refreshTokenRepository, times(1)).deleteByUserId(any(UUID.class));
       verify(refreshTokenRepository, times(1)).save(any(RefreshToken.class));
-    }
-
-    @Test
-    @DisplayName("oauth signUp success")
-    void signUp_OAuth_Success() {
-      // given
-      String tempToken = "temp-token";
-      UserDto.SignUpRequest request = UserDto.SignUpRequest.builder()
-          .temporaryToken(tempToken)
-          .birthDate(LocalDate.of(1990, 1, 1))
-          .phoneNumber("010-1234-5678")
-          .build();
-
-      given(temporaryTokenResolver.isTokenValid(tempToken)).willReturn(true);
-      given(temporaryTokenResolver.getOAuthInfoFromTemporaryToken(tempToken))
-          .willReturn(OAuthInfo.ofSocial(AuthProvider.GOOGLE, "google-id"));
-      given(temporaryTokenResolver.getEmailFromTemporaryToken(tempToken))
-          .willReturn("google@example.com");
-      given(userRepository.existsByEmail(any(Email.class))).willReturn(false);
-
-      User savedUser = User.createSocial(
-          OAuthInfo.ofSocial(AuthProvider.GOOGLE, "google-id"),
-          "google@example.com",
-          request.getBirthDate(),
-          request.getPhoneNumber());
-      given(userRepository.save(any(User.class))).willReturn(savedUser);
-
-      given(tokenProvider.generateToken(any(UUID.class), any(UserRole.class)))
-          .willReturn(UserDto.TokenResponse.builder()
-              .accessToken("access")
-              .refreshToken("refresh")
-              .build());
-
-      // when
-      UserDto.SignUpResponse response = authService.signUp(request);
-
-      // then
-      assertThat(response.getUser().getEmail()).isEqualTo("google@example.com");
-      assertThat(response.getTokens().getAccessToken()).isEqualTo("access");
-      verify(userEventPublisher, times(1)).publishUserSignUpEvent(savedUser.getId());
     }
 
     @Test
@@ -189,6 +156,58 @@ class AuthServiceTest {
           .isInstanceOf(DomainException.class)
           .extracting("errorCode")
           .isEqualTo(UserErrorCode.LOGIN_ID_ALREADY_EXISTS);
+    }
+  }
+
+  @Nested
+  @DisplayName("oauthSignUp")
+  class OAuthSignUpTest {
+    @Test
+    @DisplayName("oauth signUp success")
+    void oauthSignUp_Success() {
+      // given
+      String tempToken = "temp-token";
+      UserDto.OAuthSignUpRequest request = UserDto.OAuthSignUpRequest.builder()
+          .temporaryToken(tempToken)
+          .email("google@example.com")
+          .loginId("googleuser")
+          .name("김영희")
+          .nickname("영희")
+          .birthDate(LocalDate.of(1990, 1, 1))
+          .phoneNumber("010-1234-5678")
+          .build();
+
+      given(temporaryTokenResolver.isTokenValid(tempToken)).willReturn(true);
+      given(temporaryTokenResolver.getOAuthInfoFromTemporaryToken(tempToken))
+          .willReturn(OAuthInfo.ofSocial(AuthProvider.GOOGLE, "google-id"));
+      given(temporaryTokenResolver.getEmailFromTemporaryToken(tempToken))
+          .willReturn("google@example.com");
+      given(userRepository.existsByEmail(any(Email.class))).willReturn(false);
+
+      User savedUser = User.createSocial(
+          OAuthInfo.ofSocial(AuthProvider.GOOGLE, "google-id"),
+          "google@example.com",
+          PersonalDetails.of(
+              PhoneNumber.parse(request.getPhoneNumber()),
+              request.getBirthDate(),
+              request.getName(),
+              request.getNickname()),
+          passwordEncoder);
+      given(userRepository.save(any(User.class))).willReturn(savedUser);
+
+      given(tokenProvider.generateToken(any(UUID.class), any(UserRole.class)))
+          .willReturn(UserDto.TokenResponse.builder()
+              .accessToken("access")
+              .refreshToken("refresh")
+              .build());
+
+      // when
+      UserDto.SignUpResponse response = authService.oauthSignUp(request);
+
+      // then
+      assertThat(response.getUser().getEmail()).isEqualTo("google@example.com");
+      assertThat(response.getTokens().getAccessToken()).isEqualTo("access");
+      verify(userEventPublisher, times(1)).publishUserSignUpEvent(savedUser.getId());
     }
   }
 

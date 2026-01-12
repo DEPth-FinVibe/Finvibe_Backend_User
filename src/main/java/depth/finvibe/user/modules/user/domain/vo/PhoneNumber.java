@@ -15,6 +15,19 @@ public class PhoneNumber {
     private String secondPart;
     private String thirdPart;
 
+    public static PhoneNumber parse(String phoneNumberStr) {
+        if(phoneNumberStr == null) {
+            throw new DomainException(UserErrorCode.INVALID_PHONE_NUMBER_PARAMS);
+        }
+
+        String[] parts = phoneNumberStr.split("-");
+        if(parts.length != 3) {
+            throw new DomainException(UserErrorCode.INVALID_PHONE_NUMBER_PARAMS);
+        }
+
+        return new PhoneNumber(parts[0], parts[1], parts[2]);
+    }
+
     public PhoneNumber(String firstPart, String secondPart, String thirdPart) {
         if(firstPart == null || secondPart == null || thirdPart == null) {
             throw new DomainException(UserErrorCode.INVALID_PHONE_NUMBER_PARAMS);

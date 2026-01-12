@@ -20,6 +20,8 @@ import depth.finvibe.user.modules.user.domain.error.UserErrorCode;
 import depth.finvibe.user.modules.user.domain.vo.Email;
 import depth.finvibe.user.modules.user.domain.vo.LoginId;
 import depth.finvibe.user.modules.user.domain.vo.OAuthInfo;
+import depth.finvibe.user.modules.user.domain.vo.PersonalDetails;
+import depth.finvibe.user.modules.user.domain.vo.PhoneNumber;
 import depth.finvibe.user.modules.user.dto.UserDto;
 import depth.finvibe.user.shared.error.DomainException;
 import lombok.RequiredArgsConstructor;
@@ -41,46 +43,66 @@ public class AuthService implements AuthCommandUseCase {
     @Override
     @Transactional
     public UserDto.SignUpResponse signUp(UserDto.SignUpRequest request) {
-        User savedUser = (request.getTemporaryToken() != null && !request.getTemporaryToken().isBlank())
-                ? signUpWithOAuth(request)
-                : signUpWithLocal(request);
+        User savedUser = signUpWithLocal(request);
 
         userEventPublisher.publishUserSignUpEvent(savedUser.getId());
 
         UserDto.TokenResponse tokens = issueTokens(savedUser);
 
-        return UserDto.SignUpResponse.builder()
-                .user(UserDto.UserResponse.from(savedUser))
-                .tokens(tokens)
-                .build();
+        return UserDto.SignUpResponse.of(UserDto.UserResponse.from(savedUser), tokens);
+    }
+
+    @Override
+    @Transactional
+    public UserDto.SignUpResponse oauthSignUp(UserDto.OAuthSignUpRequest request) {
+        User savedUser = signUpWithOAuth(request);
+
+        userEventPublisher.publishUserSignUpEvent(savedUser.getId());
+
+        UserDto.TokenResponse tokens = issueTokens(savedUser);
+
+        return UserDto.SignUpResponse.of(UserDto.UserResponse.from(savedUser), tokens);
     }
 
     private User signUpWithLocal(UserDto.SignUpRequest request) {
-        checkUserAlreadyExist(request);
-        User user = createUserFromSignUpRequest(request);
+        checkUserAlreadyExist(request.getEmail(), request.getLoginId());
+
+        User user = createUserFromRequest(request);
+
         return userRepository.save(user);
     }
 
-    private User signUpWithOAuth(UserDto.SignUpRequest request) {
+    private User signUpWithOAuth(UserDto.OAuthSignUpRequest request) {
         if (!temporaryTokenResolver.isTokenValid(request.getTemporaryToken())) {
             throw new DomainException(UserErrorCode.INVALID_TEMPORARY_TOKEN);
         }
 
-        OAuthInfo oAuthInfo = temporaryTokenResolver.getOAuthInfoFromTemporaryToken(request.getTemporaryToken());
-        String email = temporaryTokenResolver.getEmailFromTemporaryToken(request.getTemporaryToken());
-        if (email == null || email.isBlank()) {
-            email = request.getEmail();
-        }
-        if (email == null || email.isBlank()) {
-            throw new DomainException(UserErrorCode.INVALID_EMAIL_FORMAT);
-        }
+        checkEmailIsValidWithToken(request);
+        checkUserAlreadyExist(request.getEmail(), request.getLoginId());
 
-        if (userRepository.existsByEmail(new Email(email))) {
-            throw new DomainException(UserErrorCode.EMAIL_ALREADY_EXISTS);
-        }
-
-        User user = User.createSocial(oAuthInfo, email, request.getBirthDate(), request.getPhoneNumber());
+        User user = createUserFromRequest(request);
         return userRepository.save(user);
+    }
+
+    private User createUserFromRequest(UserDto.OAuthSignUpRequest request) {
+        PhoneNumber phoneNumber = PhoneNumber.parse(request.getPhoneNumber());
+        PersonalDetails personalDetails = PersonalDetails.of(
+                phoneNumber, request.getBirthDate(),
+                request.getNickname(),
+                request.getName());
+
+        return User.createSocial(
+                temporaryTokenResolver.getOAuthInfoFromTemporaryToken(request.getTemporaryToken()),
+                request.getEmail(),
+                personalDetails,
+                passwordEncoder);
+    }
+
+    private void checkEmailIsValidWithToken(UserDto.OAuthSignUpRequest request) {
+        String tokenEmail = temporaryTokenResolver.getEmailFromTemporaryToken(request.getTemporaryToken());
+        if (!request.getEmail().equals(tokenEmail)) {
+            throw new DomainException(UserErrorCode.EMAIL_MISMATCH);
+        }
     }
 
     @Override
@@ -175,19 +197,23 @@ public class AuthService implements AuthCommandUseCase {
         refreshTokenRepository.save(RefreshToken.create(userId, refreshToken));
     }
 
-    private void checkUserAlreadyExist(UserDto.SignUpRequest request) {
-        if (userRepository.existsByEmail(new Email(request.getEmail()))) {
+    private void checkUserAlreadyExist(String email, String loginId) {
+        if (userRepository.existsByEmail(new Email(email))) {
             throw new DomainException(UserErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
-        if (userRepository.existsByLoginId(new LoginId(request.getLoginId()))) {
+        if (userRepository.existsByLoginId(new LoginId(loginId))) {
             throw new DomainException(UserErrorCode.LOGIN_ID_ALREADY_EXISTS);
         }
     }
 
-    private User createUserFromSignUpRequest(UserDto.SignUpRequest request) {
-        return User.create(request.getLoginId(), request.getPassword(), request.getEmail(), request.getBirthDate(),
-                request.getPhoneNumber(), passwordEncoder);
+    private User createUserFromRequest(UserDto.SignUpRequest request) {
+        PhoneNumber phoneNumber = PhoneNumber.parse(request.getPhoneNumber());
+        PersonalDetails personalDetails = PersonalDetails.of(phoneNumber, request.getBirthDate(),
+                request.getNickname(), request.getName());
+
+        return User.create(request.getLoginId(), request.getPassword(), request.getEmail(), personalDetails,
+                passwordEncoder);
     }
 
     private UserDto.TokenResponse issueTokens(User user) {

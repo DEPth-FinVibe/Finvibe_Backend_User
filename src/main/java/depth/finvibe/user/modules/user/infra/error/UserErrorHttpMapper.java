@@ -21,7 +21,8 @@ public class UserErrorHttpMapper implements DomainErrorHttpMapper {
     return switch (userCode) {
       case INVALID_PHONE_NUMBER_PARAMS,
           INVALID_EMAIL_FORMAT,
-          INVALID_LOGIN_ID_FORMAT -> HttpStatus.BAD_REQUEST;
+          INVALID_LOGIN_ID_FORMAT,
+          EMAIL_MISMATCH -> HttpStatus.BAD_REQUEST;
 
       case INVALID_PASSWORD,
           INVALID_REFRESH_TOKEN,

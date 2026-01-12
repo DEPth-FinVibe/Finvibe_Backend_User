@@ -26,27 +26,64 @@ public class UserDto {
     @NoArgsConstructor(access = AccessLevel.PROTECTED)
     @AllArgsConstructor
     public static class SignUpRequest {
+        @Email
+        private String email;
+
         @NotEmpty
         private String loginId;
+
         @NotEmpty
         private String password;
-        @Email
+
         @NotEmpty
-        private String email;
+        private String nickname;
+
+        @NotEmpty
+        private String name;
+
         @NotNull
         @Past
         private LocalDate birthDate;
-        @Pattern(regexp = "^010-\\d{4}-\\d{4}$")
+
+        @Pattern(regexp = "^010-\\d{4}-\\d{4}$", message = "휴대폰 번호는 010-0000-0000 형식이어야 합니다.")
         private String phoneNumber;
-        private String temporaryToken; //Nullable (OAuth)
     }
 
     @Getter
     @Builder
     @NoArgsConstructor(access = AccessLevel.PROTECTED)
     @AllArgsConstructor
+    public static class OAuthSignUpRequest {
+        @Email
+        private String email;
+
+        @NotEmpty
+        private String loginId;
+
+        @NotEmpty
+        private String nickname;
+
+        @NotEmpty
+        private String name;
+
+        @NotNull
+        @Past
+        private LocalDate birthDate;
+
+        @Pattern(regexp = "^010-\\d{4}-\\d{4}$", message = "휴대폰 번호는 010-0000-0000 형식이어야 합니다.")
+        private String phoneNumber;
+
+        @NotEmpty
+        private String temporaryToken;
+    }
+
+    @Getter
+    @Builder
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor(staticName = "of")
     public static class SignUpResponse {
         private UserResponse user;
+
         private TokenResponse tokens;
     }
 
@@ -128,6 +165,8 @@ public class UserDto {
     public static class UserResponse {
         private UUID userId;
         private String email;
+        private String nickname;
+        private String name;
         private LocalDate birthDate;
         private String phoneNumber;
 
@@ -135,8 +174,10 @@ public class UserDto {
             return UserResponse.builder()
                     .userId(user.getId())
                     .email(user.getEmail().getValue())
-                    .birthDate(user.getBirthDate())
-                    .phoneNumber(user.getPhoneNumber() != null ? user.getPhoneNumber().toString() : null)
+                    .nickname(user.getPersonalDetails().getNickname())
+                    .name(user.getPersonalDetails().getName())
+                    .birthDate(user.getPersonalDetails().getBirthDate())
+                    .phoneNumber(user.getPersonalDetails().getPhoneNumber().toString())
                     .build();
         }
     }

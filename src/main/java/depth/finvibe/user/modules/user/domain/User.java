@@ -3,17 +3,13 @@ package depth.finvibe.user.modules.user.domain;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import depth.finvibe.user.modules.user.domain.vo.*;
 import jakarta.persistence.*;
 import lombok.Builder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import depth.finvibe.user.modules.user.domain.enums.UserRole;
 import depth.finvibe.user.modules.user.domain.error.UserErrorCode;
-import depth.finvibe.user.modules.user.domain.vo.Email;
-import depth.finvibe.user.modules.user.domain.vo.LoginId;
-import depth.finvibe.user.modules.user.domain.vo.OAuthInfo;
-import depth.finvibe.user.modules.user.domain.vo.PasswordHash;
-import depth.finvibe.user.modules.user.domain.vo.PhoneNumber;
 import depth.finvibe.user.shared.domain.TimeStampedBaseEntity;
 import depth.finvibe.user.shared.error.DomainException;
 import lombok.AllArgsConstructor;
@@ -36,11 +32,11 @@ public class User extends TimeStampedBaseEntity {
     private Email email;
 
     @Embedded
-    @AttributeOverride(name = "value", column = @Column(name = "login_id", nullable = true))
+    @AttributeOverride(name = "value", column = @Column(name = "login_id", nullable = false))
     private LoginId loginId;
 
     @Embedded
-    @AttributeOverride(name = "passwordHash", column = @Column(name = "password_hash", nullable = true))
+    @AttributeOverride(name = "passwordHash", column = @Column(name = "password_hash", nullable = false))
     private PasswordHash passwordHash;
 
     @Embedded
@@ -50,56 +46,45 @@ public class User extends TimeStampedBaseEntity {
     @Column(nullable = false)
     private UserRole role;
 
-    @Column(nullable = false)
-    private LocalDate birthDate;
-
     @Embedded
-    @AttributeOverrides({
-            @AttributeOverride(name = "firstPart", column = @Column(name = "phone_number_first_part")),
-            @AttributeOverride(name = "secondPart", column = @Column(name = "phone_number_second_part")),
-            @AttributeOverride(name = "thirdPart", column = @Column(name = "phone_number_third_part"))
-    })
-    private PhoneNumber phoneNumber;
+    private PersonalDetails personalDetails;
 
     @Builder.Default
     @Column(nullable = false)
     private boolean isDeleted = false;
 
-    public static User create(String loginId, String password, String email, LocalDate birthDate, String phoneNumber,
-            PasswordEncoder passwordEncoder) {
-        String[] phoneParts = phoneNumber.split("-");
-        PhoneNumber phone = (phoneParts.length == 3)
-                ? new PhoneNumber(phoneParts[0], phoneParts[1], phoneParts[2])
-                : null;
-
+    public static User create(String loginId, String password, String email, PersonalDetails personalDetails, PasswordEncoder passwordEncoder) {
         return User.builder()
                 .id(UUID.randomUUID())
                 .loginId(new LoginId(loginId))
                 .passwordHash(PasswordHash.create(password, passwordEncoder))
                 .email(new Email(email))
-                .birthDate(birthDate)
-                .phoneNumber(phone)
+                .personalDetails(personalDetails)
                 .role(UserRole.USER)
                 .build();
     }
 
-    public static User createSocial(OAuthInfo oAuthInfo, String email, LocalDate birthDate, String phoneNumber) {
-        String[] phoneParts = phoneNumber.split("-");
-        PhoneNumber phone = (phoneParts.length == 3)
-                ? new PhoneNumber(phoneParts[0], phoneParts[1], phoneParts[2])
-                : null;
+    public static User createSocial(OAuthInfo oAuthInfo, String email, PersonalDetails personalDetails, PasswordEncoder passwordEncoder) {
+        String randomPassword = UUID.randomUUID().toString().replaceAll("-", "").substring(0, 12);
 
         return User.builder()
                 .id(UUID.randomUUID())
                 .oauthInfo(oAuthInfo)
                 .email(new Email(email))
-                .birthDate(birthDate)
-                .phoneNumber(phone)
+                .passwordHash(PasswordHash.create(randomPassword, passwordEncoder))
+                .personalDetails(personalDetails)
                 .role(UserRole.USER)
                 .build();
     }
 
-    public void update(String loginId,
+    public void withdraw() {
+        validateActive();
+
+        this.isDeleted = true;
+    }
+
+    public void update(
+            String loginId,
             String password,
             LocalDate birthDate,
             String phoneNumber,
@@ -107,32 +92,30 @@ public class User extends TimeStampedBaseEntity {
             UUID requesterId,
             UserRole requesterRole) {
         validateActive();
-
-        if (requesterId != this.id && requesterRole != UserRole.ADMIN) {
-            throw new DomainException(UserErrorCode.UNAUTHORIZED_USER_UPDATE);
-        }
+        validateUpdatable(requesterId, requesterRole);
 
         if (loginId != null) {
             this.loginId = new LoginId(loginId);
         }
+
         if (password != null) {
             this.passwordHash = PasswordHash.create(password, passwordEncoder);
         }
-        if (birthDate != null) {
-            this.birthDate = birthDate;
-        }
-        if (phoneNumber != null) {
-            String[] phoneParts = phoneNumber.split("-");
-            if (phoneParts.length == 3) {
-                this.phoneNumber = new PhoneNumber(phoneParts[0], phoneParts[1], phoneParts[2]);
-            }
-        }
-    }
 
-    public void withdraw() {
-        validateActive();
+        if (birthDate != null || phoneNumber != null) {
+            PhoneNumber newPhoneNumber = phoneNumber != null
+                    ? PhoneNumber.parse(phoneNumber)
+                    : this.personalDetails.getPhoneNumber();
+            LocalDate newBirthDate = birthDate != null
+                    ? birthDate
+                    : this.personalDetails.getBirthDate();
 
-        this.isDeleted = true;
+            this.personalDetails = PersonalDetails.of(
+                    newPhoneNumber,
+                    newBirthDate,
+                    this.personalDetails.getName(),
+                    this.personalDetails.getNickname());
+        }
     }
 
     public void validateLogin(String rawPassword, PasswordEncoder passwordEncoder) {
@@ -145,6 +128,12 @@ public class User extends TimeStampedBaseEntity {
     public void validateActive() {
         if (this.isDeleted) {
             throw new DomainException(UserErrorCode.USER_DELETED);
+        }
+    }
+
+    private void validateUpdatable(UUID requesterId, UserRole requesterRole) {
+        if (!this.id.equals(requesterId) && requesterRole != UserRole.ADMIN) {
+            throw new DomainException(UserErrorCode.UNAUTHORIZED_USER_UPDATE);
         }
     }
 }

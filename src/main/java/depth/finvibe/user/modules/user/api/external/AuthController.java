@@ -28,6 +28,11 @@ public class AuthController {
         return authCommandUseCase.signUp(request);
     }
 
+    @PostMapping("/oauth-signup")
+    public UserDto.SignUpResponse oauthSignUp(@RequestBody @Valid UserDto.OAuthSignUpRequest request) {
+        return authCommandUseCase.oauthSignUp(request);
+    }
+
     @PostMapping("/refresh")
     public UserDto.TokenRefreshResponse refreshToken(@RequestBody @Valid UserDto.TokenRefreshRequest request) {
         return authCommandUseCase.refreshToken(request);

@@ -7,6 +7,8 @@ import depth.finvibe.user.modules.user.dto.UserDto;
 public interface AuthCommandUseCase {
     UserDto.SignUpResponse signUp(UserDto.SignUpRequest request);
 
+    UserDto.SignUpResponse oauthSignUp(UserDto.OAuthSignUpRequest request);
+
     UserDto.TokenResponse login(UserDto.LoginRequest request);
 
     UserDto.OAuthLoginResponse oauthLogin(UserDto.OAuthLoginRequest request);

@@ -85,12 +85,11 @@
 
 ---
 
-### 회원가입 (로컬/소셜 통합)
+### 회원가입 (로컬)
 
 `POST /auth/signup`
 
-- 설명: 회원가입 후 토큰을 발급합니다.
-  - `temporaryToken`이 있으면 **소셜(OAuth) 가입 완료**로 처리합니다.
+- 설명: 로컬 회원가입 후 토큰을 발급합니다.
 - 인증: 불필요
 
 요청 바디
@@ -102,12 +101,10 @@
 | `email` | String | 이메일(형식 체크) | Y |
 | `birthDate` | String(`YYYY-MM-DD`) | 생년월일(과거 날짜) | Y |
 | `phoneNumber` | String | 휴대폰 번호(형식: `010-0000-0000`) | 권장 |
-| `temporaryToken` | String | 소셜 가입용 임시 토큰(OAuth) | N |
 
 주의
 
 - 현재 구현상 `phoneNumber`가 `null`이면 서버 내부 예외가 발생할 수 있어 **항상 값을 보내는 것을 권장**합니다.
-- `temporaryToken`이 있는 소셜 가입에서도 DTO 유효성 검증 때문에 `loginId/password/email`이 비어있으면 `400`이 발생할 수 있어 **비어있지 않게 전달**하는 것을 권장합니다.
 
 요청 예시 (로컬 가입)
 
@@ -115,6 +112,39 @@
 {
   "loginId": "user1234",
   "password": "pw1234!",
+  "email": "user@example.com",
+  "birthDate": "2000-01-01",
+  "phoneNumber": "010-1234-5678"
+}
+```
+
+---
+
+### 회원가입 (OAuth)
+
+`POST /auth/oauth-signup`
+
+- 설명: OAuth 가입 완료 후 토큰을 발급합니다.
+- 인증: 불필요
+
+요청 바디
+
+| 필드명 | 타입 | 설명 | 필수 여부 |
+|---|---|---|:---:|
+| `temporaryToken` | String | OAuth 가입용 임시 토큰 | Y |
+| `email` | String | 이메일(형식 체크, 제공 시에만) | N |
+| `birthDate` | String(`YYYY-MM-DD`) | 생년월일(과거 날짜) | Y |
+| `phoneNumber` | String | 휴대폰 번호(형식: `010-0000-0000`) | 권장 |
+
+주의
+
+- 현재 구현상 `phoneNumber`가 `null`이면 서버 내부 예외가 발생할 수 있어 **항상 값을 보내는 것을 권장**합니다.
+
+요청 예시 (OAuth 가입)
+
+```json
+{
+  "temporaryToken": "temp-token",
   "email": "user@example.com",
   "birthDate": "2000-01-01",
   "phoneNumber": "010-1234-5678"
@@ -381,4 +411,3 @@
   { "stockId": 1, "name": "삼성전자", "userId": "00000000-0000-0000-0000-000000000000" }
 ]
 ```
-

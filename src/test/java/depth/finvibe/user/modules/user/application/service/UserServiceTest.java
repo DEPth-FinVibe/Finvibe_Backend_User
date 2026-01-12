@@ -33,6 +33,7 @@ import depth.finvibe.user.modules.user.domain.enums.UserRole;
 import depth.finvibe.user.modules.user.domain.error.UserErrorCode;
 import depth.finvibe.user.modules.user.domain.vo.Email;
 import depth.finvibe.user.modules.user.domain.vo.LoginId;
+import depth.finvibe.user.modules.user.domain.vo.PersonalDetails;
 import depth.finvibe.user.modules.user.domain.vo.PhoneNumber;
 import depth.finvibe.user.modules.user.dto.UserDto;
 import depth.finvibe.user.shared.dto.Requester;
@@ -82,8 +83,8 @@ class UserServiceTest {
       // then
       assertThat(response.getUserId()).isEqualTo(user.getId());
       assertThat(user.getLoginId().getValue()).isEqualTo("user456");
-      assertThat(user.getBirthDate()).isEqualTo(LocalDate.of(1991, 2, 2));
-      assertThat(user.getPhoneNumber().toString()).isEqualTo("010-0000-0000");
+      assertThat(user.getPersonalDetails().getBirthDate()).isEqualTo(LocalDate.of(1991, 2, 2));
+      assertThat(user.getPersonalDetails().getPhoneNumber().toString()).isEqualTo("010-0000-0000");
     }
 
     @Test
@@ -353,8 +354,11 @@ class UserServiceTest {
         .id(userId)
         .email(new Email("test@example.com"))
         .loginId(new LoginId("user123"))
-        .birthDate(LocalDate.of(1990, 1, 1))
-        .phoneNumber(new PhoneNumber("010", "1234", "5678"))
+        .personalDetails(PersonalDetails.of(
+            new PhoneNumber("010", "1234", "5678"),
+            LocalDate.of(1990, 1, 1),
+            "테스트",
+            "tester"))
         .role(UserRole.USER)
         .isDeleted(false)
         .build();
