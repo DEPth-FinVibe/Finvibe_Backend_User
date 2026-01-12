@@ -42,7 +42,6 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         UserDto.OAuthLoginRequest loginRequest = UserDto.OAuthLoginRequest.builder()
                 .provider(provider)
                 .providerId(providerId)
-                .email(email)
                 .build();
 
         UserDto.OAuthLoginResponse loginResponse = authCommandUseCase.oauthLogin(loginRequest);

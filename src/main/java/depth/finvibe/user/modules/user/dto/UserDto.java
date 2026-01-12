@@ -101,7 +101,6 @@ public class UserDto {
     public static class OAuthLoginRequest {
         private AuthProvider provider;
         private String providerId;
-        private String email;
     }
 
     @Getter

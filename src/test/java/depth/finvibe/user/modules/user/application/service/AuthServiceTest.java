@@ -307,7 +307,6 @@ class AuthServiceTest {
       UserDto.OAuthLoginRequest request = UserDto.OAuthLoginRequest.builder()
           .provider(AuthProvider.GOOGLE)
           .providerId("google-id")
-          .email("new@example.com")
           .build();
 
       given(userRepository.findByOauthInfo(any(OAuthInfo.class))).willReturn(Optional.empty());
