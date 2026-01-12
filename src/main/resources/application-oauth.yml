@@ -11,8 +11,6 @@ spring:
               - openid
               - profile
               - email
-              - birthday
-              - mobile
             redirect-uri: "${OAUTH_BASE_URI}/login/oauth2/code/{registrationId}"
           naver:
             client-id: ${NAVER_CLIENT_ID}
@@ -21,8 +19,6 @@ spring:
             scope:
               - name
               - email
-              - birthday
-              - mobile
             redirect-uri: "${OAUTH_BASE_URI}/login/oauth2/code/{registrationId}"
 #          kakao:
 #            client-id: ${KAKAO_CLIENT_ID}
