@@ -68,6 +68,12 @@ public class AuthService implements AuthCommandUseCase {
 
         OAuthInfo oAuthInfo = temporaryTokenResolver.getOAuthInfoFromTemporaryToken(request.getTemporaryToken());
         String email = temporaryTokenResolver.getEmailFromTemporaryToken(request.getTemporaryToken());
+        if (email == null || email.isBlank()) {
+            email = request.getEmail();
+        }
+        if (email == null || email.isBlank()) {
+            throw new DomainException(UserErrorCode.INVALID_EMAIL_FORMAT);
+        }
 
         if (userRepository.existsByEmail(new Email(email))) {
             throw new DomainException(UserErrorCode.EMAIL_ALREADY_EXISTS);

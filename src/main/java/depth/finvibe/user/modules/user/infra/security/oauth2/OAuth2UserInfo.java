@@ -35,14 +35,23 @@ public class OAuth2UserInfo {
     }
 
     private static OAuth2UserInfo ofKakao(Map<String, Object> attributes) {
-        Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
-        Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
+        if (attributes.containsKey("kakao_account")) {
+            Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
+            Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
+
+            return OAuth2UserInfo.builder()
+                    .providerId(String.valueOf(attributes.get("id")))
+                    .provider(AuthProvider.KAKAO)
+                    .email((String) kakaoAccount.get("email"))
+                    .name(profile != null ? (String) profile.get("nickname") : null)
+                    .build();
+        }
 
         return OAuth2UserInfo.builder()
-                .providerId(String.valueOf(attributes.get("id")))
+                .providerId(attributes.get("sub") != null ? attributes.get("sub").toString() : null)
                 .provider(AuthProvider.KAKAO)
-                .email((String) kakaoAccount.get("email"))
-                .name((String) profile.get("nickname"))
+                .email((String) attributes.get("email"))
+                .name((String) (attributes.get("nickname") != null ? attributes.get("nickname") : attributes.get("name")))
                 .build();
     }
 

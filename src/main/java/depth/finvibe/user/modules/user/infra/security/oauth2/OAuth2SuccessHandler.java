@@ -56,8 +56,10 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                 .queryParam("registration_required", response.isRegistrationRequired());
 
         if (response.isRegistrationRequired()) {
-            builder.queryParam("temporary_token", response.getTemporaryToken())
-                    .queryParam("email", email);
+            builder.queryParam("temporary_token", response.getTemporaryToken());
+            if (email != null && !email.isBlank()) {
+                builder.queryParam("email", email);
+            }
         } else {
             builder.queryParam("access_token", response.getTokens().getAccessToken())
                     .queryParam("refresh_token", response.getTokens().getRefreshToken())
