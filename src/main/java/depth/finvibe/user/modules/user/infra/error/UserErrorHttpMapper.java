@@ -22,6 +22,9 @@ public class UserErrorHttpMapper implements DomainErrorHttpMapper {
       case INVALID_PHONE_NUMBER_PARAMS,
           INVALID_EMAIL_FORMAT,
           INVALID_LOGIN_ID_FORMAT,
+          INVALID_BIRTH_DATE,
+          INVALID_NICKNAME_FORMAT,
+          INVALID_NAME_FORMAT,
           EMAIL_MISMATCH -> HttpStatus.BAD_REQUEST;
 
       case INVALID_PASSWORD,

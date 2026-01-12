@@ -1,5 +1,7 @@
 package depth.finvibe.user.modules.user.domain.vo;
 
+import depth.finvibe.user.modules.user.domain.error.UserErrorCode;
+import depth.finvibe.user.shared.error.DomainException;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
@@ -10,7 +12,7 @@ import java.time.LocalDate;
 
 @Embeddable
 @NoArgsConstructor
-@AllArgsConstructor(staticName = "of")
+@AllArgsConstructor
 @Getter
 public class PersonalDetails {
     @Embedded
@@ -29,4 +31,44 @@ public class PersonalDetails {
 
     @Column(nullable = false)
     private String nickname;
+
+    @Embedded
+    private Email email;
+
+    public static PersonalDetails of(PhoneNumber phoneNumber, LocalDate birthDate, String name, String nickname, Email email) {
+        validateBirthday(birthDate);
+        validateNickname(nickname);
+        validateName(name);
+
+        return new PersonalDetails(
+                phoneNumber,
+                birthDate,
+                name,
+                nickname,
+                email
+        );
+    }
+
+    private static void validateName(String name) {
+        //이름은 2자 이상 10자 이하의 영문 대소문자, 한글만 허용
+        if (name == null || !name.matches("^[a-zA-Z가-힣]{2,10}$")) {
+            throw new DomainException(UserErrorCode.INVALID_NAME_FORMAT);
+        }
+    }
+
+    private static void validateNickname(String nickname) {
+        //닉네임은 2자 이상 10자 이하의 영문 소문자, 숫자, 한글만 허용
+        if (nickname == null || !nickname.matches("^[a-z0-9가-힣]{2,10}$")) {
+            throw new DomainException(UserErrorCode.INVALID_NICKNAME_FORMAT);
+        }
+    }
+
+    private static void validateBirthday(LocalDate birthDate) {
+        //120세 이상, 미래에서 온 생일 방지
+        LocalDate today = LocalDate.now();
+        LocalDate earliestValidDate = today.minusYears(120);
+        if (birthDate.isBefore(earliestValidDate) || birthDate.isAfter(today)) {
+            throw new DomainException(UserErrorCode.INVALID_BIRTH_DATE);
+        }
+    }
 }

@@ -33,6 +33,7 @@ import depth.finvibe.user.modules.user.domain.enums.UserRole;
 import depth.finvibe.user.modules.user.domain.error.UserErrorCode;
 import depth.finvibe.user.modules.user.domain.vo.Email;
 import depth.finvibe.user.modules.user.domain.vo.LoginId;
+import depth.finvibe.user.modules.user.domain.vo.PasswordHash;
 import depth.finvibe.user.modules.user.domain.vo.PersonalDetails;
 import depth.finvibe.user.modules.user.domain.vo.PhoneNumber;
 import depth.finvibe.user.modules.user.dto.UserDto;
@@ -64,18 +65,21 @@ class UserServiceTest {
     @DisplayName("success")
     void update_Success() {
       // given
+      given(passwordEncoder.encode("old-password")).willReturn("encoded-old");
       User user = createActiveUser(UUID.randomUUID());
       Requester requester = new Requester(user.getId(), UserRole.USER);
       UserDto.UpdateUserRequest request = UserDto.UpdateUserRequest.builder()
           .loginId("user456")
-          .password("new-password")
+          .oldPassword("old-password")
+          .newPassword("new-password")
           .birthDate(LocalDate.of(1991, 2, 2))
           .phoneNumber("010-0000-0000")
           .build();
 
       given(userRepository.findById(user.getId())).willReturn(Optional.of(user));
       given(userRepository.existsByLoginId(any(LoginId.class))).willReturn(false);
-      given(passwordEncoder.encode(anyString())).willReturn("encoded");
+      given(passwordEncoder.matches("old-password", "encoded-old")).willReturn(true);
+      given(passwordEncoder.encode("new-password")).willReturn("encoded-new");
 
       // when
       UserDto.UserResponse response = userService.update(user.getId(), request, requester);
@@ -352,13 +356,14 @@ class UserServiceTest {
   private User createActiveUser(UUID userId) {
     return User.builder()
         .id(userId)
-        .email(new Email("test@example.com"))
         .loginId(new LoginId("user123"))
+        .passwordHash(PasswordHash.create("old-password", passwordEncoder))
         .personalDetails(PersonalDetails.of(
             new PhoneNumber("010", "1234", "5678"),
             LocalDate.of(1990, 1, 1),
             "테스트",
-            "tester"))
+            "tester",
+            new Email("test@example.com")))
         .role(UserRole.USER)
         .isDeleted(false)
         .build();

@@ -29,10 +29,7 @@ public class User extends TimeStampedBaseEntity {
     private UUID id = UUID.randomUUID();
 
     @Embedded
-    private Email email;
-
-    @Embedded
-    @AttributeOverride(name = "value", column = @Column(name = "login_id", nullable = false))
+    @AttributeOverride(name = "value", column = @Column(name = "login_id"))
     private LoginId loginId;
 
     @Embedded
@@ -53,24 +50,22 @@ public class User extends TimeStampedBaseEntity {
     @Column(nullable = false)
     private boolean isDeleted = false;
 
-    public static User create(String loginId, String password, String email, PersonalDetails personalDetails, PasswordEncoder passwordEncoder) {
+    public static User create(LoginId loginId, PasswordHash password, PersonalDetails personalDetails) {
         return User.builder()
                 .id(UUID.randomUUID())
-                .loginId(new LoginId(loginId))
-                .passwordHash(PasswordHash.create(password, passwordEncoder))
-                .email(new Email(email))
+                .loginId(loginId)
+                .passwordHash(password)
                 .personalDetails(personalDetails)
                 .role(UserRole.USER)
                 .build();
     }
 
-    public static User createSocial(OAuthInfo oAuthInfo, String email, PersonalDetails personalDetails, PasswordEncoder passwordEncoder) {
+    public static User createSocial(OAuthInfo oAuthInfo, PersonalDetails personalDetails, PasswordEncoder passwordEncoder) {
         String randomPassword = UUID.randomUUID().toString().replaceAll("-", "").substring(0, 12);
 
         return User.builder()
                 .id(UUID.randomUUID())
                 .oauthInfo(oAuthInfo)
-                .email(new Email(email))
                 .passwordHash(PasswordHash.create(randomPassword, passwordEncoder))
                 .personalDetails(personalDetails)
                 .role(UserRole.USER)
@@ -84,39 +79,21 @@ public class User extends TimeStampedBaseEntity {
     }
 
     public void update(
-            String loginId,
-            String password,
-            LocalDate birthDate,
-            String phoneNumber,
-            PasswordEncoder passwordEncoder,
-            UUID requesterId,
-            UserRole requesterRole) {
-        validateActive();
-        validateUpdatable(requesterId, requesterRole);
-
+        LoginId loginId,
+        PasswordHash passwordHash,
+        PersonalDetails personalDetails
+    ) {
         if (loginId != null) {
-            this.loginId = new LoginId(loginId);
+            this.loginId = loginId;
         }
-
-        if (password != null) {
-            this.passwordHash = PasswordHash.create(password, passwordEncoder);
+        if (passwordHash != null) {
+            this.passwordHash = passwordHash;
         }
-
-        if (birthDate != null || phoneNumber != null) {
-            PhoneNumber newPhoneNumber = phoneNumber != null
-                    ? PhoneNumber.parse(phoneNumber)
-                    : this.personalDetails.getPhoneNumber();
-            LocalDate newBirthDate = birthDate != null
-                    ? birthDate
-                    : this.personalDetails.getBirthDate();
-
-            this.personalDetails = PersonalDetails.of(
-                    newPhoneNumber,
-                    newBirthDate,
-                    this.personalDetails.getName(),
-                    this.personalDetails.getNickname());
+        if (personalDetails != null) {
+            this.personalDetails = personalDetails;
         }
     }
+
 
     public void validateLogin(String rawPassword, PasswordEncoder passwordEncoder) {
         validateActive();
@@ -131,7 +108,7 @@ public class User extends TimeStampedBaseEntity {
         }
     }
 
-    private void validateUpdatable(UUID requesterId, UserRole requesterRole) {
+    public void validateUpdatable(UUID requesterId, UserRole requesterRole) {
         if (!this.id.equals(requesterId) && requesterRole != UserRole.ADMIN) {
             throw new DomainException(UserErrorCode.UNAUTHORIZED_USER_UPDATE);
         }

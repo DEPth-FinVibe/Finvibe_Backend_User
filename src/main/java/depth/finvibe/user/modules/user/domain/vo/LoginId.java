@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class LoginId {
-    private static final String LOGIN_ID_REGEX = "^[a-zA-Z0-9]{4,20}$";
+    private static final String LOGIN_ID_REGEX = "^[a-z0-9]{5,20}$";
     private static final Pattern LOGIN_ID_PATTERN = Pattern.compile(LOGIN_ID_REGEX);
 
     @Column(name = "login_id")

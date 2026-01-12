@@ -6,6 +6,4 @@ public interface TemporaryTokenResolver {
     boolean isTokenValid(String token);
 
     OAuthInfo getOAuthInfoFromTemporaryToken(String temporaryToken);
-
-    String getEmailFromTemporaryToken(String temporaryToken);
 }

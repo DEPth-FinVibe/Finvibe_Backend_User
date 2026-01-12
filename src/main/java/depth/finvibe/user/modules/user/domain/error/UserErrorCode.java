@@ -31,7 +31,10 @@ public enum UserErrorCode implements DomainErrorCode {
   UNAUTHORIZED_INTEREST_STOCK_CREATION("UNAUTHORIZED_INTEREST_STOCK_CREATION", "관심 종목을 등록할 권한이 없습니다."),
   INVALID_REFRESH_TOKEN("INVALID_REFRESH_TOKEN", "리프레시 토큰이 유효하지 않습니다."),
   INVALID_TEMPORARY_TOKEN("INVALID_TEMPORARY_TOKEN", "임시 토큰이 유효하지 않습니다."),
-  EMAIL_MISMATCH("EMAIL_MISMATCH", "외부 로그인 계정과 이메일이 일치하지 않습니다.");
+  EMAIL_MISMATCH("EMAIL_MISMATCH", "외부 로그인 계정과 이메일이 일치하지 않습니다."),
+  INVALID_BIRTH_DATE("INVALID_BIRTH_DATE", "유효하지 않은 생년월일입니다."),
+  INVALID_NICKNAME_FORMAT("INVALID_NICKNAME_FORMAT", "닉네임 형식이 올바르지 않습니다."),
+  INVALID_NAME_FORMAT("INVALID_NAME_FORMAT", "이름 형식이 올바르지 않습니다.");
 
   private final String code;
   private final String message;

@@ -2,6 +2,7 @@ package depth.finvibe.user.modules.user.application.service;
 
 import java.util.UUID;
 
+import depth.finvibe.user.modules.user.domain.vo.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,11 +18,6 @@ import depth.finvibe.user.modules.user.application.port.out.UserRepository;
 import depth.finvibe.user.modules.user.domain.RefreshToken;
 import depth.finvibe.user.modules.user.domain.User;
 import depth.finvibe.user.modules.user.domain.error.UserErrorCode;
-import depth.finvibe.user.modules.user.domain.vo.Email;
-import depth.finvibe.user.modules.user.domain.vo.LoginId;
-import depth.finvibe.user.modules.user.domain.vo.OAuthInfo;
-import depth.finvibe.user.modules.user.domain.vo.PersonalDetails;
-import depth.finvibe.user.modules.user.domain.vo.PhoneNumber;
 import depth.finvibe.user.modules.user.dto.UserDto;
 import depth.finvibe.user.shared.error.DomainException;
 import lombok.RequiredArgsConstructor;
@@ -77,39 +73,37 @@ public class AuthService implements AuthCommandUseCase {
             throw new DomainException(UserErrorCode.INVALID_TEMPORARY_TOKEN);
         }
 
-        checkEmailIsValidWithToken(request);
-        checkUserAlreadyExist(request.getEmail(), request.getLoginId());
+        checkEmailAlreadyExist(request.getEmail());
 
         User user = createUserFromRequest(request);
         return userRepository.save(user);
     }
 
+    private void checkEmailAlreadyExist(String email) {
+        if (userRepository.existsByEmail(new Email(email))) {
+            throw new DomainException(UserErrorCode.EMAIL_ALREADY_EXISTS);
+        }
+    }
+
     private User createUserFromRequest(UserDto.OAuthSignUpRequest request) {
         PhoneNumber phoneNumber = PhoneNumber.parse(request.getPhoneNumber());
         PersonalDetails personalDetails = PersonalDetails.of(
-                phoneNumber, request.getBirthDate(),
-                request.getNickname(),
-                request.getName());
+            phoneNumber, request.getBirthDate(),
+            request.getNickname(),
+            request.getName(),
+            new Email(request.getEmail()));
 
         return User.createSocial(
-                temporaryTokenResolver.getOAuthInfoFromTemporaryToken(request.getTemporaryToken()),
-                request.getEmail(),
-                personalDetails,
-                passwordEncoder);
-    }
-
-    private void checkEmailIsValidWithToken(UserDto.OAuthSignUpRequest request) {
-        String tokenEmail = temporaryTokenResolver.getEmailFromTemporaryToken(request.getTemporaryToken());
-        if (!request.getEmail().equals(tokenEmail)) {
-            throw new DomainException(UserErrorCode.EMAIL_MISMATCH);
-        }
+            temporaryTokenResolver.getOAuthInfoFromTemporaryToken(request.getTemporaryToken()),
+            personalDetails,
+            passwordEncoder);
     }
 
     @Override
     @Transactional
     public UserDto.TokenResponse login(UserDto.LoginRequest request) {
         User user = userRepository.findByLoginId(new LoginId(request.getLoginId()))
-                .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
+            .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
 
         user.validateLogin(request.getPassword(), passwordEncoder);
 
@@ -122,28 +116,28 @@ public class AuthService implements AuthCommandUseCase {
         OAuthInfo oAuthInfo = OAuthInfo.ofSocial(request.getProvider(), request.getProviderId());
 
         return userRepository.findByOauthInfo(oAuthInfo)
-                .map(this::handleExistingOAuthUser)
-                .orElseGet(() -> handleNewOAuthUser(request));
+            .map(this::handleExistingOAuthUser)
+            .orElseGet(() -> handleNewOAuthUser(request));
     }
 
     private UserDto.OAuthLoginResponse handleExistingOAuthUser(User user) {
         user.validateActive();
+
         return UserDto.OAuthLoginResponse.builder()
-                .tokens(completeLogin(user))
-                .registrationRequired(false)
-                .build();
+            .tokens(completeLogin(user))
+            .registrationRequired(false)
+            .build();
     }
 
     private UserDto.OAuthLoginResponse handleNewOAuthUser(UserDto.OAuthLoginRequest request) {
         String temporaryToken = temporaryTokenProvider.generateTemporaryToken(
-                request.getProvider(),
-                request.getProviderId(),
-                request.getEmail());
+            request.getProvider(),
+            request.getProviderId());
 
         return UserDto.OAuthLoginResponse.builder()
-                .temporaryToken(temporaryToken)
-                .registrationRequired(true)
-                .build();
+            .temporaryToken(temporaryToken)
+            .registrationRequired(true)
+            .build();
     }
 
     private UserDto.TokenResponse completeLogin(User user) {
@@ -166,7 +160,7 @@ public class AuthService implements AuthCommandUseCase {
     @Transactional
     public void logout(UUID userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
+            .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
 
         user.validateActive();
         refreshTokenRepository.deleteByUserId(userId);
@@ -179,12 +173,12 @@ public class AuthService implements AuthCommandUseCase {
         }
 
         return refreshTokenRepository.findByToken(refreshToken)
-                .orElseThrow(() -> new DomainException(UserErrorCode.INVALID_REFRESH_TOKEN));
+            .orElseThrow(() -> new DomainException(UserErrorCode.INVALID_REFRESH_TOKEN));
     }
 
     private void validateRefreshTokenOwner(UUID userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
+            .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
         user.validateActive();
     }
 
@@ -208,12 +202,17 @@ public class AuthService implements AuthCommandUseCase {
     }
 
     private User createUserFromRequest(UserDto.SignUpRequest request) {
-        PhoneNumber phoneNumber = PhoneNumber.parse(request.getPhoneNumber());
-        PersonalDetails personalDetails = PersonalDetails.of(phoneNumber, request.getBirthDate(),
-                request.getNickname(), request.getName());
+        PersonalDetails personalDetails = PersonalDetails.of(
+            PhoneNumber.parse(request.getPhoneNumber()),
+            request.getBirthDate(),
+            request.getNickname(),
+            request.getName(),
+            new Email(request.getEmail())
+        );
+        LoginId loginId = new LoginId(request.getLoginId());
+        PasswordHash passwordHash = PasswordHash.create(request.getPassword(), passwordEncoder);
 
-        return User.create(request.getLoginId(), request.getPassword(), request.getEmail(), personalDetails,
-                passwordEncoder);
+        return User.create(loginId, passwordHash, personalDetails);
     }
 
     private UserDto.TokenResponse issueTokens(User user) {

@@ -94,16 +94,16 @@ class AuthServiceTest {
       given(userRepository.existsByLoginId(any(LoginId.class))).willReturn(false);
       given(passwordEncoder.encode(anyString())).willReturn("encoded");
 
-      User savedUser = User.create(
-          request.getLoginId(),
-          request.getPassword(),
-          request.getEmail(),
-          PersonalDetails.of(
-              PhoneNumber.parse(request.getPhoneNumber()),
-              request.getBirthDate(),
-              request.getName(),
-              request.getNickname()),
-          passwordEncoder);
+      LoginId loginId = new LoginId(request.getLoginId());
+      PasswordHash passwordHash = PasswordHash.create(request.getPassword(), passwordEncoder);
+      PersonalDetails personalDetails = PersonalDetails.of(
+          PhoneNumber.parse(request.getPhoneNumber()),
+          request.getBirthDate(),
+          request.getName(),
+          request.getNickname(),
+          new Email(request.getEmail()));
+
+      User savedUser = User.create(loginId, passwordHash, personalDetails);
 
       given(userRepository.save(any(User.class))).willReturn(savedUser);
       given(tokenProvider.generateToken(any(UUID.class), any(UserRole.class)))
@@ -170,7 +170,6 @@ class AuthServiceTest {
       UserDto.OAuthSignUpRequest request = UserDto.OAuthSignUpRequest.builder()
           .temporaryToken(tempToken)
           .email("google@example.com")
-          .loginId("googleuser")
           .name("김영희")
           .nickname("영희")
           .birthDate(LocalDate.of(1990, 1, 1))
@@ -180,18 +179,16 @@ class AuthServiceTest {
       given(temporaryTokenResolver.isTokenValid(tempToken)).willReturn(true);
       given(temporaryTokenResolver.getOAuthInfoFromTemporaryToken(tempToken))
           .willReturn(OAuthInfo.ofSocial(AuthProvider.GOOGLE, "google-id"));
-      given(temporaryTokenResolver.getEmailFromTemporaryToken(tempToken))
-          .willReturn("google@example.com");
       given(userRepository.existsByEmail(any(Email.class))).willReturn(false);
 
       User savedUser = User.createSocial(
           OAuthInfo.ofSocial(AuthProvider.GOOGLE, "google-id"),
-          "google@example.com",
           PersonalDetails.of(
               PhoneNumber.parse(request.getPhoneNumber()),
               request.getBirthDate(),
               request.getName(),
-              request.getNickname()),
+              request.getNickname(),
+              new Email(request.getEmail())),
           passwordEncoder);
       given(userRepository.save(any(User.class))).willReturn(savedUser);
 
@@ -314,7 +311,7 @@ class AuthServiceTest {
           .build();
 
       given(userRepository.findByOauthInfo(any(OAuthInfo.class))).willReturn(Optional.empty());
-      given(temporaryTokenProvider.generateTemporaryToken(AuthProvider.GOOGLE, "google-id", "new@example.com"))
+      given(temporaryTokenProvider.generateTemporaryToken(AuthProvider.GOOGLE, "google-id"))
           .willReturn("temp-token");
 
       // when

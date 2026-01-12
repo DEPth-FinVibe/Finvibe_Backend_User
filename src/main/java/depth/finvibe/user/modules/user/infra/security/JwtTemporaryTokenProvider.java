@@ -38,7 +38,7 @@ public class JwtTemporaryTokenProvider implements TemporaryTokenProvider, Tempor
     }
 
     @Override
-    public String generateTemporaryToken(AuthProvider provider, String providerId, String email) {
+    public String generateTemporaryToken(AuthProvider provider, String providerId) {
         if (provider == null) {
             throw new IllegalArgumentException("AuthProvider must not be null");
         }
@@ -49,7 +49,6 @@ public class JwtTemporaryTokenProvider implements TemporaryTokenProvider, Tempor
                 .issuer(issuer)
                 .claim(CLAIM_PROVIDER, provider.name())
                 .claim(CLAIM_PROVIDER_ID, providerId)
-                .claim(CLAIM_EMAIL, email)
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(key, Jwts.SIG.HS256)
@@ -62,13 +61,6 @@ public class JwtTemporaryTokenProvider implements TemporaryTokenProvider, Tempor
         AuthProvider provider = AuthProvider.valueOf(claims.get(CLAIM_PROVIDER).toString());
         String providerId = claims.get(CLAIM_PROVIDER_ID).toString();
         return OAuthInfo.ofSocial(provider, providerId);
-    }
-
-    @Override
-    public String getEmailFromTemporaryToken(String temporaryToken) {
-        Claims claims = parseClaims(temporaryToken);
-        Object email = claims.get(CLAIM_EMAIL);
-        return email != null ? email.toString() : null;
     }
 
     @Override

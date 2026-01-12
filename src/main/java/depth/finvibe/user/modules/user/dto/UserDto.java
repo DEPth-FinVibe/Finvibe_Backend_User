@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import depth.finvibe.user.modules.user.domain.InterestStock;
 import depth.finvibe.user.modules.user.domain.User;
 import depth.finvibe.user.modules.user.domain.enums.AuthProvider;
@@ -58,9 +59,6 @@ public class UserDto {
         private String email;
 
         @NotEmpty
-        private String loginId;
-
-        @NotEmpty
         private String nickname;
 
         @NotEmpty
@@ -109,7 +107,8 @@ public class UserDto {
     @Getter
     @Builder
     @NoArgsConstructor(access = AccessLevel.PROTECTED)
-    @AllArgsConstructor
+    @AllArgsConstructor(staticName = "of")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class OAuthLoginResponse {
         private TokenResponse tokens;
         private String temporaryToken;
@@ -122,7 +121,12 @@ public class UserDto {
     @AllArgsConstructor
     public static class UpdateUserRequest {
         private String loginId;
-        private String password;
+        private String oldPassword;
+        private String newPassword;
+
+        private String email;
+        private String name;
+        private String nickname;
         private LocalDate birthDate;
         private String phoneNumber;
     }
@@ -173,7 +177,7 @@ public class UserDto {
         public static UserResponse from(User user) {
             return UserResponse.builder()
                     .userId(user.getId())
-                    .email(user.getEmail().getValue())
+                    .email(user.getPersonalDetails().getEmail().getValue())
                     .nickname(user.getPersonalDetails().getNickname())
                     .name(user.getPersonalDetails().getName())
                     .birthDate(user.getPersonalDetails().getBirthDate())

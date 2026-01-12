@@ -2,7 +2,10 @@ package depth.finvibe.user.modules.user.domain;
 
 import depth.finvibe.user.modules.user.domain.enums.AuthProvider;
 import depth.finvibe.user.modules.user.domain.enums.UserRole;
+import depth.finvibe.user.modules.user.domain.vo.Email;
+import depth.finvibe.user.modules.user.domain.vo.LoginId;
 import depth.finvibe.user.modules.user.domain.vo.OAuthInfo;
+import depth.finvibe.user.modules.user.domain.vo.PasswordHash;
 import depth.finvibe.user.modules.user.domain.vo.PersonalDetails;
 import depth.finvibe.user.modules.user.domain.vo.PhoneNumber;
 import depth.finvibe.user.shared.error.DomainException;
@@ -33,15 +36,18 @@ class UserTest {
                 PhoneNumber.parse(phoneNumber),
                 birthDate,
                 "홍길동",
-                "길동이");
+                "길동이",
+                new Email(email));
+        LoginId loginIdVo = new LoginId(loginId);
+        PasswordHash passwordHash = PasswordHash.create(password, passwordEncoder);
 
         // when
-        User user = User.create(loginId, password, email, personalDetails, passwordEncoder);
+        User user = User.create(loginIdVo, passwordHash, personalDetails);
 
         // then
         assertThat(user.getId()).isNotNull();
         assertThat(user.getLoginId().getValue()).isEqualTo(loginId);
-        assertThat(user.getEmail().getValue()).isEqualTo(email);
+        assertThat(user.getPersonalDetails().getEmail().getValue()).isEqualTo(email);
         assertThat(user.getPersonalDetails().getBirthDate()).isEqualTo(birthDate);
         assertThat(user.getPersonalDetails().getPhoneNumber().toString()).isEqualTo(phoneNumber);
         assertThat(user.getRole()).isEqualTo(UserRole.USER);
@@ -61,16 +67,17 @@ class UserTest {
                 PhoneNumber.parse(phoneNumber),
                 birthDate,
                 "김영희",
-                "영희");
+                "영희",
+                new Email(email));
 
         // when
-        User user = User.createSocial(oAuthInfo, email, personalDetails, passwordEncoder);
+        User user = User.createSocial(oAuthInfo, personalDetails, passwordEncoder);
 
         // then
         assertThat(user.getId()).isNotNull();
         assertThat(user.getOauthInfo().getProvider()).isEqualTo(AuthProvider.GOOGLE);
         assertThat(user.getOauthInfo().getProviderId()).isEqualTo("google-id");
-        assertThat(user.getEmail().getValue()).isEqualTo(email);
+        assertThat(user.getPersonalDetails().getEmail().getValue()).isEqualTo(email);
         assertThat(user.getPersonalDetails().getBirthDate()).isEqualTo(birthDate);
         assertThat(user.getPersonalDetails().getPhoneNumber().toString()).isEqualTo(phoneNumber);
         assertThat(user.getRole()).isEqualTo(UserRole.USER);
@@ -84,7 +91,6 @@ class UserTest {
         // given
         User user = User.builder()
                 .loginId(null) // loginId, passwordHash 등은 VO이므로 null이 아니어야 함 (실제 생성 시)
-                .email(null)
                 .isDeleted(false)
                 .build();
 

@@ -96,15 +96,13 @@
 
 | 필드명 | 타입 | 설명 | 필수 여부 |
 |---|---|---|:---:|
-| `loginId` | String | 로그인 ID (규칙: `^[a-zA-Z0-9]{4,20}$`) | Y |
+| `loginId` | String | 로그인 ID (규칙: `^[a-z0-9]{5,20}$`) | Y |
 | `password` | String | 비밀번호 | Y |
 | `email` | String | 이메일(형식 체크) | Y |
-| `birthDate` | String(`YYYY-MM-DD`) | 생년월일(과거 날짜) | Y |
-| `phoneNumber` | String | 휴대폰 번호(형식: `010-0000-0000`) | 권장 |
-
-주의
-
-- 현재 구현상 `phoneNumber`가 `null`이면 서버 내부 예외가 발생할 수 있어 **항상 값을 보내는 것을 권장**합니다.
+| `nickname` | String | 닉네임(규칙: `^[a-z0-9가-힣]{2,10}$`) | Y |
+| `name` | String | 이름(규칙: `^[a-zA-Z가-힣]{2,10}$`) | Y |
+| `birthDate` | String(`YYYY-MM-DD`) | 생년월일(과거 날짜, 120년 이내) | Y |
+| `phoneNumber` | String | 휴대폰 번호(형식: `010-0000-0000`) | Y |
 
 요청 예시 (로컬 가입)
 
@@ -113,54 +111,10 @@
   "loginId": "user1234",
   "password": "pw1234!",
   "email": "user@example.com",
+  "nickname": "닉네임1",
+  "name": "홍길동",
   "birthDate": "2000-01-01",
   "phoneNumber": "010-1234-5678"
-}
-```
-
----
-
-### 회원가입 (OAuth)
-
-`POST /auth/oauth-signup`
-
-- 설명: OAuth 가입 완료 후 토큰을 발급합니다.
-- 인증: 불필요
-
-요청 바디
-
-| 필드명 | 타입 | 설명 | 필수 여부 |
-|---|---|---|:---:|
-| `temporaryToken` | String | OAuth 가입용 임시 토큰 | Y |
-| `email` | String | 이메일(형식 체크, 제공 시에만) | N |
-| `birthDate` | String(`YYYY-MM-DD`) | 생년월일(과거 날짜) | Y |
-| `phoneNumber` | String | 휴대폰 번호(형식: `010-0000-0000`) | 권장 |
-
-주의
-
-- 현재 구현상 `phoneNumber`가 `null`이면 서버 내부 예외가 발생할 수 있어 **항상 값을 보내는 것을 권장**합니다.
-
-요청 예시 (OAuth 가입)
-
-```json
-{
-  "temporaryToken": "temp-token",
-  "email": "user@example.com",
-  "birthDate": "2000-01-01",
-  "phoneNumber": "010-1234-5678"
-}
-```
-
-요청 예시 (소셜 가입 완료)
-
-```json
-{
-  "loginId": "oauth1234",
-  "password": "oauth_dummy_password",
-  "email": "user@example.com",
-  "birthDate": "2000-01-01",
-  "phoneNumber": "010-1234-5678",
-  "temporaryToken": "<temporary_token>"
 }
 ```
 
@@ -177,6 +131,61 @@
 |---|---|---|
 | `userId` | String(UUID) | 사용자 식별자 |
 | `email` | String | 이메일 |
+| `nickname` | String | 닉네임 |
+| `name` | String | 이름 |
+| `birthDate` | String(`YYYY-MM-DD`) | 생년월일 |
+| `phoneNumber` | String | 휴대폰 번호(없을 수 있음) |
+
+`tokens`는 “로그인” 응답과 동일합니다.
+
+---
+
+### 회원가입 (OAuth)
+
+`POST /auth/oauth-signup`
+
+- 설명: OAuth 가입 완료 후 토큰을 발급합니다.
+- 인증: 불필요
+
+요청 바디
+
+| 필드명 | 타입 | 설명 | 필수 여부 |
+|---|---|---|:---:|
+| `temporaryToken` | String | OAuth 가입용 임시 토큰 | Y |
+| `email` | String | 이메일(형식 체크) | Y |
+| `nickname` | String | 닉네임(규칙: `^[a-z0-9가-힣]{2,10}$`) | Y |
+| `name` | String | 이름(규칙: `^[a-zA-Z가-힣]{2,10}$`) | Y |
+| `birthDate` | String(`YYYY-MM-DD`) | 생년월일(과거 날짜, 120년 이내) | Y |
+| `phoneNumber` | String | 휴대폰 번호(형식: `010-0000-0000`) | Y |
+
+요청 예시 (OAuth 가입)
+
+```json
+{
+  "temporaryToken": "temp-token",
+  "email": "user@example.com",
+  "nickname": "닉네임1",
+  "name": "홍길동",
+  "birthDate": "2000-01-01",
+  "phoneNumber": "010-1234-5678"
+}
+```
+
+응답 (200 OK)
+
+| 필드명 | 타입 | 설명 |
+|---|---|---|
+| `user` | Object | 가입된 사용자 정보 |
+| `tokens` | Object | 발급된 토큰 |
+
+`user`
+
+| 필드명 | 타입 | 설명 |
+|---|---|---|
+| `userId` | String(UUID) | 사용자 식별자 |
+| `email` | String | 이메일 |
+| `nickname` | String | 닉네임 |
+| `name` | String | 이름 |
 | `birthDate` | String(`YYYY-MM-DD`) | 생년월일 |
 | `phoneNumber` | String | 휴대폰 번호(없을 수 있음) |
 
@@ -189,6 +198,8 @@
   "user": {
     "userId": "00000000-0000-0000-0000-000000000000",
     "email": "user@example.com",
+    "nickname": "닉네임1",
+    "name": "홍길동",
     "birthDate": "2000-01-01",
     "phoneNumber": "010-1234-5678"
   },
@@ -258,6 +269,8 @@
 |---|---|---|
 | `userId` | String(UUID) | 사용자 식별자 |
 | `email` | String | 이메일 |
+| `nickname` | String | 닉네임 |
+| `name` | String | 이름 |
 | `birthDate` | String(`YYYY-MM-DD`) | 생년월일 |
 | `phoneNumber` | String | 휴대폰 번호(없을 수 있음) |
 
@@ -267,6 +280,8 @@
 {
   "userId": "00000000-0000-0000-0000-000000000000",
   "email": "user@example.com",
+  "nickname": "닉네임1",
+  "name": "홍길동",
   "birthDate": "2000-01-01",
   "phoneNumber": "010-1234-5678"
 }
@@ -291,9 +306,13 @@
 
 | 필드명 | 타입 | 설명 | 필수 여부 |
 |---|---|---|:---:|
-| `loginId` | String | 변경할 로그인 ID (규칙: `^[a-zA-Z0-9]{4,20}$`) | N |
-| `password` | String | 변경할 비밀번호 | N |
-| `birthDate` | String(`YYYY-MM-DD`) | 변경할 생년월일 | N |
+| `loginId` | String | 변경할 로그인 ID (규칙: `^[a-z0-9]{5,20}$`) | N |
+| `oldPassword` | String | 기존 비밀번호(비밀번호 변경 시 필수) | N |
+| `newPassword` | String | 변경할 비밀번호 | N |
+| `email` | String | 변경할 이메일(형식 체크) | N |
+| `name` | String | 변경할 이름(규칙: `^[a-zA-Z가-힣]{2,10}$`) | N |
+| `nickname` | String | 변경할 닉네임(규칙: `^[a-z0-9가-힣]{2,10}$`) | N |
+| `birthDate` | String(`YYYY-MM-DD`) | 변경할 생년월일(과거 날짜, 120년 이내) | N |
 | `phoneNumber` | String | 변경할 휴대폰 번호 (`010-0000-0000`) | N |
 
 요청 예시
@@ -301,9 +320,14 @@
 ```json
 {
   "loginId": "user5678",
+  "nickname": "닉네임2",
   "phoneNumber": "010-9999-8888"
 }
 ```
+
+주의
+
+- 비밀번호 변경 시 `oldPassword`와 `newPassword`를 함께 전달해야 합니다.
 
 응답 (200 OK)
 

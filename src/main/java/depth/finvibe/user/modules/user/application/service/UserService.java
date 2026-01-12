@@ -1,12 +1,15 @@
 package depth.finvibe.user.modules.user.application.service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import depth.finvibe.user.modules.user.application.port.out.InterestStockRepository;
 import depth.finvibe.user.modules.user.application.port.out.MarketClient;
 import depth.finvibe.user.modules.user.application.port.out.UserRepository;
+import depth.finvibe.user.modules.user.domain.vo.*;
+import org.jspecify.annotations.NonNull;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +19,6 @@ import depth.finvibe.user.modules.user.application.port.in.UserQueryUseCase;
 import depth.finvibe.user.modules.user.domain.InterestStock;
 import depth.finvibe.user.modules.user.domain.User;
 import depth.finvibe.user.modules.user.domain.error.UserErrorCode;
-import depth.finvibe.user.modules.user.domain.vo.LoginId;
 import depth.finvibe.user.modules.user.dto.UserDto;
 import depth.finvibe.user.shared.dto.Requester;
 import depth.finvibe.user.shared.error.DomainException;
@@ -102,14 +104,51 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
     }
 
     private void updateUserAttributes(UserDto.UpdateUserRequest request, User user, Requester requester) {
+        user.validateUpdatable(requester.getUserId(), requester.getRole());
+
+        LoginId updateLoginId = null;
+        PasswordHash updatePasswordHash = null;
+        PersonalDetails updatePersonalDetails;
+
+        updateLoginId = createUpdateLoginId(request, updateLoginId);
+        updatePasswordHash = createUpdatePasswordHash(request, user, updatePasswordHash);
+        updatePersonalDetails = createUpdatedPersonalDetails(request, user);
+
         user.update(
-                request.getLoginId(),
-                request.getPassword(),
-                request.getBirthDate(),
-                request.getPhoneNumber(),
-                passwordEncoder,
-                requester.getUserId(),
-                requester.getRole());
+            updateLoginId,
+            updatePasswordHash,
+            updatePersonalDetails
+        );
+    }
+
+    private static LoginId createUpdateLoginId(UserDto.UpdateUserRequest request, LoginId updateLoginId) {
+        if(Objects.nonNull(request.getLoginId())) {
+            updateLoginId = new LoginId(request.getLoginId());
+        }
+        return updateLoginId;
+    }
+
+    private PasswordHash createUpdatePasswordHash(UserDto.UpdateUserRequest request, User user, PasswordHash updatePasswordHash) {
+        if(Objects.nonNull(request.getNewPassword())) {
+            boolean passwordMatch = user.getPasswordHash().matches(request.getOldPassword(), passwordEncoder);
+            if (!passwordMatch) {
+                throw new DomainException(UserErrorCode.INVALID_PASSWORD);
+            }
+            updatePasswordHash = PasswordHash.create(request.getNewPassword(), passwordEncoder);
+        }
+        return updatePasswordHash;
+    }
+
+    private static @NonNull PersonalDetails createUpdatedPersonalDetails(UserDto.UpdateUserRequest request, User user) {
+        PersonalDetails updatePersonalDetails;
+        updatePersonalDetails = PersonalDetails.of(
+            Objects.nonNull(request.getPhoneNumber()) ? PhoneNumber.parse(request.getPhoneNumber()) : user.getPersonalDetails().getPhoneNumber(),
+            Objects.nonNull(request.getBirthDate()) ? request.getBirthDate() : user.getPersonalDetails().getBirthDate(),
+            Objects.nonNull(request.getNickname()) ? request.getNickname() : user.getPersonalDetails().getNickname(),
+            Objects.nonNull(request.getName()) ? request.getName() : user.getPersonalDetails().getName(),
+            Objects.nonNull(request.getEmail()) ? new Email(request.getEmail()) : user.getPersonalDetails().getEmail()
+        );
+        return updatePersonalDetails;
     }
 
 
