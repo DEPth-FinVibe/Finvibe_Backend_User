@@ -25,6 +25,7 @@ spring:
           google:
             client-id: dummy-client-id
             client-secret: dummy-client-secret
+            authorization-grant-type: authorization_code
             scope: profile, email
 
 jwt:
