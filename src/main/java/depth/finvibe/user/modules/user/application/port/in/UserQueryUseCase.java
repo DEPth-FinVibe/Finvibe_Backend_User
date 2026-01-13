@@ -9,4 +9,8 @@ public interface UserQueryUseCase {
     UserDto.UserResponse getMe(UUID userId);
 
     List<UserDto.FavoriteStockResponse> getFavoriteStocks(UUID userId);
+
+    UserDto.DuplicateCheckResponse checkLoginIdDuplicate(String loginId);
+
+    UserDto.DuplicateCheckResponse checkEmailDuplicate(String email);
 }

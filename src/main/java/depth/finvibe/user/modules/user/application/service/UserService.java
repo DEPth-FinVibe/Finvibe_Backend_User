@@ -103,6 +103,20 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public UserDto.DuplicateCheckResponse checkLoginIdDuplicate(String loginId) {
+        boolean isDuplicate = userRepository.existsByLoginId(new LoginId(loginId));
+        return new UserDto.DuplicateCheckResponse(isDuplicate);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserDto.DuplicateCheckResponse checkEmailDuplicate(String email) {
+        boolean isDuplicate = userRepository.existsByEmail(new Email(email));
+        return new UserDto.DuplicateCheckResponse(isDuplicate);
+    }
+
     private void updateUserAttributes(UserDto.UpdateUserRequest request, User user, Requester requester) {
         user.validateUpdatable(requester.getUserId(), requester.getRole());
 

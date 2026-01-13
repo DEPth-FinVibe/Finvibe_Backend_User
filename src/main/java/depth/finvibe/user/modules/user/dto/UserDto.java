@@ -189,6 +189,14 @@ public class UserDto {
     @Builder
     @NoArgsConstructor(access = AccessLevel.PROTECTED)
     @AllArgsConstructor
+    public static class DuplicateCheckResponse {
+        private boolean isDuplicate;
+    }
+
+    @Getter
+    @Builder
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor
     public static class FavoriteStockResponse {
         private Long stockId;
         private String name;

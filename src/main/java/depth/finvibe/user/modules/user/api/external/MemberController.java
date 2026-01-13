@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
@@ -54,6 +55,16 @@ public class MemberController {
     @GetMapping("/{userId}/favorite-stocks")
     public java.util.List<UserDto.FavoriteStockResponse> getFavoriteStocks(@PathVariable UUID userId) {
         return userQueryUseCase.getFavoriteStocks(userId);
+    }
+
+    @GetMapping("/check-login-id")
+    public UserDto.DuplicateCheckResponse checkLoginIdDuplicate(@RequestParam String loginId) {
+        return userQueryUseCase.checkLoginIdDuplicate(loginId);
+    }
+
+    @GetMapping("/check-email")
+    public UserDto.DuplicateCheckResponse checkEmailDuplicate(@RequestParam String email) {
+        return userQueryUseCase.checkEmailDuplicate(email);
     }
 
     @DeleteMapping("/{userId}")
