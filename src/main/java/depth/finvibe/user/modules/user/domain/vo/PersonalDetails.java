@@ -3,7 +3,6 @@ package depth.finvibe.user.modules.user.domain.vo;
 import depth.finvibe.user.modules.user.domain.error.UserErrorCode;
 import depth.finvibe.user.shared.error.DomainException;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

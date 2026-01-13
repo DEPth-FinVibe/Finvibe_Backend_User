@@ -19,7 +19,6 @@ import java.util.Date;
 public class JwtTemporaryTokenProvider implements TemporaryTokenProvider, TemporaryTokenResolver {
     private static final String CLAIM_PROVIDER = "provider";
     private static final String CLAIM_PROVIDER_ID = "provider_id";
-    private static final String CLAIM_EMAIL = "email";
 
     @Value("${jwt.secret}")
     private String secretKey;

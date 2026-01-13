@@ -1,6 +1,5 @@
 package depth.finvibe.user.modules.user.domain;
 
-import java.time.LocalDate;
 import java.util.UUID;
 
 import depth.finvibe.user.modules.user.domain.vo.*;
