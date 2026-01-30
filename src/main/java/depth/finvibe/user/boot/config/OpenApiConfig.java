@@ -1,8 +1,10 @@
 package depth.finvibe.user.boot.config;
 
 import depth.finvibe.user.boot.security.model.AuthenticatedUser;
+import io.swagger.v3.oas.models.Paths;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springdoc.core.utils.SpringDocUtils;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
@@ -30,6 +32,8 @@ public class OpenApiConfig {
         return GroupedOpenApi.builder()
                 .group("auth")
                 .pathsToMatch("/auth/**")
+                .pathsToExclude("/internal/**")
+                .addOpenApiCustomizer(prefixPaths("/api/user"))
                 .build();
     }
 
@@ -38,6 +42,20 @@ public class OpenApiConfig {
         return GroupedOpenApi.builder()
                 .group("member")
                 .pathsToMatch("/members/**")
+                .pathsToExclude("/internal/**")
+                .addOpenApiCustomizer(prefixPaths("/api/user"))
                 .build();
+    }
+
+    private OpenApiCustomizer prefixPaths(String prefix) {
+        return openApi -> {
+            if (openApi.getPaths() == null || openApi.getPaths().isEmpty()) {
+                return;
+            }
+
+            Paths prefixedPaths = new Paths();
+            openApi.getPaths().forEach((path, item) -> prefixedPaths.addPathItem(prefix + path, item));
+            openApi.setPaths(prefixedPaths);
+        };
     }
 }
