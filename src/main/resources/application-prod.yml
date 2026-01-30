@@ -32,6 +32,6 @@ logging:
     depth.finvibe.investment: info
 springdoc:
   swagger-ui:
-    path: /doc/investment/swagger-ui.html
+    path: /doc/user/swagger-ui.html
   api-docs:
-    path: /doc/investment/v3/api-docs
+    path: /doc/user/v3/api-docs
