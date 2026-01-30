@@ -9,7 +9,6 @@ spring:
     url: jdbc:mariadb://localhost:3306/finvibe
     username: finvibe
     password: finvibe
-    driver-class-name: org.mariadb.jdbc.Driver
 
   jpa:
     hibernate:
@@ -39,3 +38,7 @@ logging:
   level:
     root: info
     depth.finvibe.investment: debug
+
+app:
+  oauth2:
+    enabled: false
