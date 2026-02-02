@@ -117,6 +117,14 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
         return new UserDto.DuplicateCheckResponse(isDuplicate);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public String getNickname(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
+        return user.getPersonalDetails().getNickname();
+    }
+
     private void updateUserAttributes(UserDto.UpdateUserRequest request, User user, Requester requester) {
         user.validateUpdatable(requester.getUserId(), requester.getRole());
 

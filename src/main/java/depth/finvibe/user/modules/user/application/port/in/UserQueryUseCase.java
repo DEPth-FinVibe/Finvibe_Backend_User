@@ -13,4 +13,6 @@ public interface UserQueryUseCase {
     UserDto.DuplicateCheckResponse checkLoginIdDuplicate(String loginId);
 
     UserDto.DuplicateCheckResponse checkEmailDuplicate(String email);
+
+    String getNickname(UUID userId);
 }
