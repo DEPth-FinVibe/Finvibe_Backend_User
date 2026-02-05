@@ -1,12 +1,14 @@
 package depth.finvibe.user.modules.user.api.internal;
 
 import depth.finvibe.user.modules.user.application.port.in.UserQueryUseCase;
+import depth.finvibe.user.modules.user.dto.UserDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -21,5 +23,12 @@ public class InternalMemberController {
         @PathVariable String userId
     ) {
         return userQueryUseCase.getNickname(UUID.fromString(userId));
+    }
+
+    @GetMapping("/{userId}/favorite-stocks")
+    public List<UserDto.FavoriteStockResponse> getFavoriteStocks(
+        @PathVariable String userId
+    ) {
+        return userQueryUseCase.getFavoriteStocks(UUID.fromString(userId));
     }
 }

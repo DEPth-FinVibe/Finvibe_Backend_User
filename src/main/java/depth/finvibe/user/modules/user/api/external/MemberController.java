@@ -80,7 +80,7 @@ public class MemberController {
 
     @DeleteMapping("/{userId}")
     @Operation(summary = "회원 탈퇴", description = "회원 계정을 탈퇴 처리합니다.")
-    public void withdraw(@PathVariable UUID userId) {
-        userCommandUseCase.withdraw(userId);
+    public void withdraw(@Parameter(hidden = true) @AuthenticatedUser Requester requester) {
+        userCommandUseCase.withdraw(requester.getUserId());
     }
 }
