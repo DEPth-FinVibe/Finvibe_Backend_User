@@ -56,8 +56,8 @@ public class PersonalDetails {
     }
 
     private static void validateNickname(String nickname) {
-        //닉네임은 2자 이상 10자 이하의 영문 소문자, 숫자, 한글만 허용
-        if (nickname == null || !nickname.matches("^[a-z0-9가-힣]{2,10}$")) {
+        //닉네임은 최대 10자, 특수문자 없이 영문/숫자/한글만 허용
+        if (nickname == null || !nickname.matches("^[a-zA-Z0-9가-힣]{1,10}$")) {
             throw new DomainException(UserErrorCode.INVALID_NICKNAME_FORMAT);
         }
     }

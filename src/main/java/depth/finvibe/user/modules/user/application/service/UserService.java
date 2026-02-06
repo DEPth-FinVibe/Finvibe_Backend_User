@@ -41,9 +41,32 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
                 .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
 
         checkLoginIdAlreadyExist(user, request.getLoginId());
+        checkNicknameAlreadyExist(user, request.getNickname());
 
         updateUserAttributes(request, user, requester);
 
+        return UserDto.UserResponse.from(user);
+    }
+
+    @Override
+    @Transactional
+    public UserDto.UserResponse changeNickname(UUID userId, UserDto.ChangeNicknameRequest request, Requester requester) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
+
+        user.validateUpdatable(requester.getUserId(), requester.getRole());
+        checkNicknameAlreadyExist(user, request.getNickname());
+
+        PersonalDetails personalDetails = user.getPersonalDetails();
+        PersonalDetails updatedPersonalDetails = PersonalDetails.of(
+                personalDetails.getPhoneNumber(),
+                personalDetails.getBirthDate(),
+                personalDetails.getName(),
+                request.getNickname(),
+                personalDetails.getEmail()
+        );
+
+        user.update(null, null, updatedPersonalDetails);
         return UserDto.UserResponse.from(user);
     }
 
@@ -119,6 +142,13 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
 
     @Override
     @Transactional(readOnly = true)
+    public UserDto.DuplicateCheckResponse checkNicknameDuplicate(String nickname) {
+        boolean isDuplicate = userRepository.existsByNickname(nickname);
+        return new UserDto.DuplicateCheckResponse(isDuplicate);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public String getNickname(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
@@ -178,6 +208,14 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
         if (newLoginId != null && !user.getLoginId().getValue().equals(newLoginId)) {
             if (userRepository.existsByLoginId(new LoginId(newLoginId))) {
                 throw new DomainException(UserErrorCode.LOGIN_ID_ALREADY_EXISTS);
+            }
+        }
+    }
+
+    private void checkNicknameAlreadyExist(User user, String newNickname) {
+        if (newNickname != null && !user.getPersonalDetails().getNickname().equals(newNickname)) {
+            if (userRepository.existsByNickname(newNickname)) {
+                throw new DomainException(UserErrorCode.NICKNAME_ALREADY_EXISTS);
             }
         }
     }

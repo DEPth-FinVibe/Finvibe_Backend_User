@@ -14,6 +14,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -176,6 +177,19 @@ public class UserDto {
 
         @Schema(description = "휴대폰 번호", example = "010-1234-5678")
         private String phoneNumber;
+    }
+
+    @Getter
+    @Builder
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor
+    @Schema(name = "ChangeNicknameRequest", description = "닉네임 변경 요청")
+    public static class ChangeNicknameRequest {
+        @NotEmpty
+        @Size(max = 10, message = "닉네임은 최대 10자까지 가능합니다.")
+        @Pattern(regexp = "^[a-zA-Z0-9가-힣]+$", message = "닉네임은 특수문자를 포함할 수 없습니다.")
+        @Schema(description = "닉네임", example = "핀바이브")
+        private String nickname;
     }
 
     @Getter

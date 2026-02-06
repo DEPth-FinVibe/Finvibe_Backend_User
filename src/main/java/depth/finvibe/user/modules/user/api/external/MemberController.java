@@ -8,6 +8,7 @@ import depth.finvibe.user.shared.dto.Requester;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -44,6 +45,14 @@ public class MemberController {
         return userCommandUseCase.update(userId, request, requester);
     }
 
+    @PatchMapping("/{userId}/nickname")
+    @Operation(summary = "닉네임 변경", description = "회원 닉네임을 변경합니다.")
+    public UserDto.UserResponse changeNickname(@PathVariable UUID userId,
+                                               @RequestBody @Valid UserDto.ChangeNicknameRequest request,
+                                               @Parameter(hidden = true) @AuthenticatedUser Requester requester) {
+        return userCommandUseCase.changeNickname(userId, request, requester);
+    }
+
     @PostMapping("/{userId}/favorite-stocks/{stockId}")
     @Operation(summary = "관심 종목 추가", description = "사용자의 관심 종목을 추가합니다.")
     public UserDto.FavoriteStockResponse addFavoriteStock(@PathVariable UUID userId,
@@ -76,6 +85,12 @@ public class MemberController {
     @Operation(summary = "이메일 중복 확인", description = "이메일 중복 여부를 확인합니다.")
     public UserDto.DuplicateCheckResponse checkEmailDuplicate(@RequestParam String email) {
         return userQueryUseCase.checkEmailDuplicate(email);
+    }
+
+    @GetMapping("/check-nickname")
+    @Operation(summary = "닉네임 중복 확인", description = "닉네임 중복 여부를 확인합니다.")
+    public UserDto.DuplicateCheckResponse checkNicknameDuplicate(@RequestParam String nickname) {
+        return userQueryUseCase.checkNicknameDuplicate(nickname);
     }
 
     @DeleteMapping("/{userId}")

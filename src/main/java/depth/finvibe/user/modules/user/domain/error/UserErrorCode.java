@@ -20,6 +20,7 @@ public enum UserErrorCode implements DomainErrorCode {
   INVALID_LOGIN_ID_FORMAT("INVALID_LOGIN_ID_FORMAT", "로그인 ID 형식이 올바르지 않습니다."),
   EMAIL_ALREADY_EXISTS("EMAIL_ALREADY_EXISTS", "이미 존재하는 이메일입니다."),
   LOGIN_ID_ALREADY_EXISTS("LOGIN_ID_ALREADY_EXISTS", "이미 존재하는 로그인 ID입니다."),
+  NICKNAME_ALREADY_EXISTS("NICKNAME_ALREADY_EXISTS", "이미 존재하는 닉네임입니다."),
   USER_NOT_FOUND("USER_NOT_FOUND", "사용자를 찾을 수 없습니다."),
   INVALID_PASSWORD("INVALID_PASSWORD", "비밀번호가 올바르지 않습니다."),
   USER_DELETED("USER_DELETED", "삭제된 사용자입니다."),

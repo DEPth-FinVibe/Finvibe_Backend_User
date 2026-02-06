@@ -125,6 +125,69 @@ class UserServiceTest {
           .extracting("errorCode")
           .isEqualTo(UserErrorCode.LOGIN_ID_ALREADY_EXISTS);
     }
+
+    @Test
+    @DisplayName("nickname already exists")
+    void update_Fail_NicknameExists() {
+      // given
+      User user = createActiveUser(UUID.randomUUID());
+      Requester requester = new Requester(user.getId(), UserRole.USER);
+      UserDto.UpdateUserRequest request = UserDto.UpdateUserRequest.builder()
+          .nickname("duplicateNick")
+          .build();
+
+      given(userRepository.findById(user.getId())).willReturn(Optional.of(user));
+      given(userRepository.existsByNickname("duplicateNick")).willReturn(true);
+
+      // when & then
+      assertThatThrownBy(() -> userService.update(user.getId(), request, requester))
+          .isInstanceOf(DomainException.class)
+          .extracting("errorCode")
+          .isEqualTo(UserErrorCode.NICKNAME_ALREADY_EXISTS);
+    }
+  }
+
+  @Nested
+  @DisplayName("changeNickname")
+  class ChangeNicknameTest {
+    @Test
+    @DisplayName("success")
+    void changeNickname_Success() {
+      // given
+      User user = createActiveUser(UUID.randomUUID());
+      Requester requester = new Requester(user.getId(), UserRole.USER);
+      UserDto.ChangeNicknameRequest request = UserDto.ChangeNicknameRequest.builder()
+          .nickname("newNick")
+          .build();
+      given(userRepository.findById(user.getId())).willReturn(Optional.of(user));
+      given(userRepository.existsByNickname("newNick")).willReturn(false);
+
+      // when
+      UserDto.UserResponse response = userService.changeNickname(user.getId(), request, requester);
+
+      // then
+      assertThat(response.getNickname()).isEqualTo("newNick");
+      assertThat(user.getPersonalDetails().getNickname()).isEqualTo("newNick");
+    }
+
+    @Test
+    @DisplayName("nickname already exists")
+    void changeNickname_Fail_NicknameExists() {
+      // given
+      User user = createActiveUser(UUID.randomUUID());
+      Requester requester = new Requester(user.getId(), UserRole.USER);
+      UserDto.ChangeNicknameRequest request = UserDto.ChangeNicknameRequest.builder()
+          .nickname("duplicateNick")
+          .build();
+      given(userRepository.findById(user.getId())).willReturn(Optional.of(user));
+      given(userRepository.existsByNickname("duplicateNick")).willReturn(true);
+
+      // when & then
+      assertThatThrownBy(() -> userService.changeNickname(user.getId(), request, requester))
+          .isInstanceOf(DomainException.class)
+          .extracting("errorCode")
+          .isEqualTo(UserErrorCode.NICKNAME_ALREADY_EXISTS);
+    }
   }
 
   @Nested
@@ -349,6 +412,23 @@ class UserServiceTest {
       assertThat(response).hasSize(2);
       assertThat(response.get(0).getStockId()).isEqualTo(1L);
       assertThat(response.get(1).getName()).isEqualTo("BETA");
+    }
+  }
+
+  @Nested
+  @DisplayName("checkNicknameDuplicate")
+  class CheckNicknameDuplicateTest {
+    @Test
+    @DisplayName("returns duplicate status")
+    void checkNicknameDuplicate_Success() {
+      // given
+      given(userRepository.existsByNickname("tester")).willReturn(true);
+
+      // when
+      UserDto.DuplicateCheckResponse response = userService.checkNicknameDuplicate("tester");
+
+      // then
+      assertThat(response.isDuplicate()).isTrue();
     }
   }
 

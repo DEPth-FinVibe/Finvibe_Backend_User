@@ -42,6 +42,7 @@ public class UserErrorHttpMapper implements DomainErrorHttpMapper {
 
       case EMAIL_ALREADY_EXISTS,
           LOGIN_ID_ALREADY_EXISTS,
+          NICKNAME_ALREADY_EXISTS,
           INTEREST_STOCK_ALREADY_EXISTS -> HttpStatus.CONFLICT;
     };
   }

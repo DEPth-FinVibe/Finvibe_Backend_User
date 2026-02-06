@@ -46,4 +46,9 @@ public class UserRepositoryImpl implements UserRepository {
     public boolean existsByLoginId(LoginId loginId) {
         return jpaUserRepository.existsByLoginId(loginId);
     }
+
+    @Override
+    public boolean existsByNickname(String nickname) {
+        return jpaUserRepository.existsByPersonalDetails_Nickname(nickname);
+    }
 }
