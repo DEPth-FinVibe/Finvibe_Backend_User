@@ -20,8 +20,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.UUID;
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/members")
@@ -37,42 +35,38 @@ public class MemberController {
         return userQueryUseCase.getMe(requester.getUserId());
     }
 
-    @PatchMapping("/{userId}")
+    @PatchMapping
     @Operation(summary = "회원 정보 수정", description = "회원 정보를 수정합니다.")
-    public UserDto.UserResponse update(@PathVariable UUID userId,
-                                       @RequestBody UserDto.UpdateUserRequest request,
+    public UserDto.UserResponse update(@RequestBody UserDto.UpdateUserRequest request,
                                        @Parameter(hidden = true) @AuthenticatedUser Requester requester) {
-        return userCommandUseCase.update(userId, request, requester);
+        return userCommandUseCase.update(request, requester);
     }
 
-    @PatchMapping("/{userId}/nickname")
+    @PatchMapping("/nickname")
     @Operation(summary = "닉네임 변경", description = "회원 닉네임을 변경합니다.")
-    public UserDto.UserResponse changeNickname(@PathVariable UUID userId,
-                                               @RequestBody @Valid UserDto.ChangeNicknameRequest request,
+    public UserDto.UserResponse changeNickname(@RequestBody @Valid UserDto.ChangeNicknameRequest request,
                                                @Parameter(hidden = true) @AuthenticatedUser Requester requester) {
-        return userCommandUseCase.changeNickname(userId, request, requester);
+        return userCommandUseCase.changeNickname(request, requester);
     }
 
-    @PostMapping("/{userId}/favorite-stocks/{stockId}")
+    @PostMapping("/favorite-stocks/{stockId}")
     @Operation(summary = "관심 종목 추가", description = "사용자의 관심 종목을 추가합니다.")
-    public UserDto.FavoriteStockResponse addFavoriteStock(@PathVariable UUID userId,
-                                                          @PathVariable Long stockId,
+    public UserDto.FavoriteStockResponse addFavoriteStock(@PathVariable Long stockId,
                                                           @Parameter(hidden = true) @AuthenticatedUser Requester requester) {
-        return userCommandUseCase.addFavoriteStock(userId, stockId, requester);
+        return userCommandUseCase.addFavoriteStock(stockId, requester);
     }
 
-    @DeleteMapping("/{userId}/favorite-stocks/{stockId}")
+    @DeleteMapping("/favorite-stocks/{stockId}")
     @Operation(summary = "관심 종목 삭제", description = "사용자의 관심 종목을 삭제합니다.")
-    public UserDto.FavoriteStockResponse removeFavoriteStock(@PathVariable UUID userId,
-                                                             @PathVariable Long stockId,
+    public UserDto.FavoriteStockResponse removeFavoriteStock(@PathVariable Long stockId,
                                                              @Parameter(hidden = true) @AuthenticatedUser Requester requester) {
-        return userCommandUseCase.removeFavoriteStock(userId, stockId, requester);
+        return userCommandUseCase.removeFavoriteStock(stockId, requester);
     }
 
-    @GetMapping("/{userId}/favorite-stocks")
+    @GetMapping("/favorite-stocks")
     @Operation(summary = "관심 종목 조회", description = "사용자의 관심 종목 목록을 조회합니다.")
-    public java.util.List<UserDto.FavoriteStockResponse> getFavoriteStocks(@PathVariable UUID userId) {
-        return userQueryUseCase.getFavoriteStocks(userId);
+    public java.util.List<UserDto.FavoriteStockResponse> getFavoriteStocks(@Parameter(hidden = true) @AuthenticatedUser Requester requester) {
+        return userQueryUseCase.getFavoriteStocks(requester.getUserId());
     }
 
     @GetMapping("/check-login-id")

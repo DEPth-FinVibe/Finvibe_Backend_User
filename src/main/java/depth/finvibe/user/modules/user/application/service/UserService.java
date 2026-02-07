@@ -36,8 +36,8 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
 
     @Override
     @Transactional
-    public UserDto.UserResponse update(UUID userId, UserDto.UpdateUserRequest request, Requester requester) {
-        User user = userRepository.findById(userId)
+    public UserDto.UserResponse update(UserDto.UpdateUserRequest request, Requester requester) {
+        User user = userRepository.findById(requester.getUserId())
                 .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
 
         checkLoginIdAlreadyExist(user, request.getLoginId());
@@ -50,8 +50,8 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
 
     @Override
     @Transactional
-    public UserDto.UserResponse changeNickname(UUID userId, UserDto.ChangeNicknameRequest request, Requester requester) {
-        User user = userRepository.findById(userId)
+    public UserDto.UserResponse changeNickname(UserDto.ChangeNicknameRequest request, Requester requester) {
+        User user = userRepository.findById(requester.getUserId())
                 .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
 
         user.validateUpdatable(requester.getUserId(), requester.getRole());
@@ -83,13 +83,13 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
 
     @Override
     @Transactional
-    public UserDto.FavoriteStockResponse addFavoriteStock(UUID userId, Long stockId, Requester requester) {
-        checkStockIsAlreadyAdded(userId, stockId);
+    public UserDto.FavoriteStockResponse addFavoriteStock(Long stockId, Requester requester) {
+        checkStockIsAlreadyAdded(requester.getUserId(), stockId);
 
         String stockName = marketClient.getStockNameByStockId(stockId)
                 .orElseThrow(() -> new DomainException(UserErrorCode.MARKET_DATA_NOT_FOUND));
 
-        InterestStock interestStock = InterestStock.create(userId, stockId, stockName);
+        InterestStock interestStock = InterestStock.create(requester.getUserId(), stockId, stockName);
         interestStock.validateCreatable(requester.getUserId(), requester.getRole());
 
         InterestStock saved = interestStockRepository.save(interestStock);
@@ -99,13 +99,13 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
 
     @Override
     @Transactional
-    public UserDto.FavoriteStockResponse removeFavoriteStock(UUID userId, Long stockId, Requester requester) {
-        InterestStock interestStock = interestStockRepository.findByUserIdAndStockId(userId, stockId)
+    public UserDto.FavoriteStockResponse removeFavoriteStock(Long stockId, Requester requester) {
+        InterestStock interestStock = interestStockRepository.findByUserIdAndStockId(requester.getUserId(), stockId)
                 .orElseThrow(() -> new DomainException(UserErrorCode.INTEREST_STOCK_NOT_FOUND));
 
         interestStock.validateDeletable(requester.getUserId(), requester.getRole());
 
-        interestStockRepository.deleteByUserIdAndStockId(userId, stockId);
+        interestStockRepository.deleteByUserIdAndStockId(requester.getUserId(), stockId);
         return UserDto.FavoriteStockResponse.from(interestStock);
     }
 
