@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/members")
@@ -85,6 +87,12 @@ public class MemberController {
     @Operation(summary = "닉네임 중복 확인", description = "닉네임 중복 여부를 확인합니다.")
     public UserDto.DuplicateCheckResponse checkNicknameDuplicate(@RequestParam String nickname) {
         return userQueryUseCase.checkNicknameDuplicate(nickname);
+    }
+
+    @GetMapping("/{userId}")
+    @Operation(summary = "타 유저 프로필 조회", description = "특정 회원의 닉네임과 게이미피케이션 요약 정보를 조회합니다.")
+    public UserDto.MemberProfileResponse getMemberProfile(@PathVariable String userId) {
+        return userQueryUseCase.getMemberProfile(UUID.fromString(userId));
     }
 
     @DeleteMapping("/{userId}")

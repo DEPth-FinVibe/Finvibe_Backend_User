@@ -2,9 +2,13 @@ package depth.finvibe.user.modules.user.dto;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import depth.finvibe.user.modules.user.domain.InterestStock;
 import depth.finvibe.user.modules.user.domain.User;
 import depth.finvibe.user.modules.user.domain.enums.AuthProvider;
@@ -309,5 +313,62 @@ public class UserDto {
                     .userId(interestStock.getUserId())
                     .build();
         }
+    }
+
+    @Getter
+    @Builder
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor
+    @Schema(name = "UserSummaryResponse", description = "유저 게이미피케이션 요약 정보")
+    public static class UserSummaryResponse {
+        @Schema(description = "사용자 UUID")
+        private UUID userId;
+
+        @Schema(description = "보유 뱃지 목록")
+        private java.util.List<OwnedBadge> badges;
+
+        @Schema(description = "주간 XP 랭킹 순위")
+        private Integer ranking;
+
+        @Schema(description = "누적 보유 XP")
+        private Long totalXp;
+
+        @Schema(description = "현재 수익률")
+        private Double currentReturnRate;
+    }
+
+    @Getter
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor
+    @Schema(name = "OwnedBadge", description = "사용자 보유 뱃지")
+    public static class OwnedBadge {
+        @Schema(description = "뱃지 동적 필드")
+        private Map<String, Object> attributes = new HashMap<>();
+
+        @JsonAnySetter
+        public void addAttribute(String key, Object value) {
+            attributes.put(key, value);
+        }
+
+        @JsonAnyGetter
+        public Map<String, Object> getAttributes() {
+            return attributes;
+        }
+    }
+
+    @Getter
+    @Builder
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    @AllArgsConstructor
+    @Schema(name = "MemberProfileResponse", description = "닉네임 + 게이미피케이션 요약 응답")
+    public static class MemberProfileResponse {
+        @Schema(description = "회원 ID", example = "00000000-0000-0000-0000-000000000000")
+        private UUID userId;
+
+        @Schema(description = "닉네임", example = "핀바이브")
+        private String nickname;
+
+        @Schema(description = "게이미피케이션 요약")
+        private UserSummaryResponse gamificationSummary;
     }
 }
