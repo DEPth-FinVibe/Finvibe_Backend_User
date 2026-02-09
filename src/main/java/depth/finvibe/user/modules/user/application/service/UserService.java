@@ -6,6 +6,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import depth.finvibe.user.modules.user.application.port.out.InterestStockRepository;
+import depth.finvibe.user.modules.user.application.port.out.GamificationClient;
 import depth.finvibe.user.modules.user.application.port.out.MarketClient;
 import depth.finvibe.user.modules.user.application.port.out.UserRepository;
 import depth.finvibe.user.modules.user.domain.vo.*;
@@ -31,6 +32,7 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
 
     private final UserRepository userRepository;
     private final InterestStockRepository interestStockRepository;
+    private final GamificationClient gamificationClient;
     private final MarketClient marketClient;
     private final PasswordEncoder passwordEncoder;
 
@@ -153,6 +155,22 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
         return user.getPersonalDetails().getNickname();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserDto.MemberProfileResponse getMemberProfile(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
+
+        UserDto.UserSummaryResponse summary = gamificationClient.getUserSummary(userId)
+                .orElseThrow(() -> new DomainException(UserErrorCode.GAMIFICATION_DATA_NOT_FOUND));
+
+        return UserDto.MemberProfileResponse.builder()
+                .userId(user.getId())
+                .nickname(user.getPersonalDetails().getNickname())
+                .gamificationSummary(summary)
+                .build();
     }
 
     private void updateUserAttributes(UserDto.UpdateUserRequest request, User user, Requester requester) {

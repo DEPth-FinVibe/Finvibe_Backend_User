@@ -24,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import depth.finvibe.user.modules.user.application.port.out.InterestStockRepository;
+import depth.finvibe.user.modules.user.application.port.out.GamificationClient;
 import depth.finvibe.user.modules.user.application.port.out.MarketClient;
 import depth.finvibe.user.modules.user.application.port.out.UserRepository;
 import depth.finvibe.user.modules.user.domain.InterestStock;
@@ -50,6 +51,9 @@ class UserServiceTest {
 
   @Mock
   private InterestStockRepository interestStockRepository;
+
+  @Mock
+  private GamificationClient gamificationClient;
 
   @Mock
   private MarketClient marketClient;
@@ -81,7 +85,7 @@ class UserServiceTest {
       given(passwordEncoder.encode("new-password")).willReturn("encoded-new");
 
       // when
-      UserDto.UserResponse response = userService.update(user.getId(), request, requester);
+      UserDto.UserResponse response = userService.update(request, requester);
 
       // then
       assertThat(response.getUserId()).isEqualTo(user.getId());
@@ -100,7 +104,7 @@ class UserServiceTest {
       given(userRepository.findById(userId)).willReturn(Optional.empty());
 
       // when & then
-      assertThatThrownBy(() -> userService.update(userId, request, requester))
+      assertThatThrownBy(() -> userService.update(request, requester))
           .isInstanceOf(DomainException.class)
           .extracting("errorCode")
           .isEqualTo(UserErrorCode.USER_NOT_FOUND);
@@ -120,7 +124,7 @@ class UserServiceTest {
       given(userRepository.existsByLoginId(any(LoginId.class))).willReturn(true);
 
       // when & then
-      assertThatThrownBy(() -> userService.update(user.getId(), request, requester))
+      assertThatThrownBy(() -> userService.update(request, requester))
           .isInstanceOf(DomainException.class)
           .extracting("errorCode")
           .isEqualTo(UserErrorCode.LOGIN_ID_ALREADY_EXISTS);
@@ -140,7 +144,7 @@ class UserServiceTest {
       given(userRepository.existsByNickname("duplicateNick")).willReturn(true);
 
       // when & then
-      assertThatThrownBy(() -> userService.update(user.getId(), request, requester))
+      assertThatThrownBy(() -> userService.update(request, requester))
           .isInstanceOf(DomainException.class)
           .extracting("errorCode")
           .isEqualTo(UserErrorCode.NICKNAME_ALREADY_EXISTS);
@@ -163,7 +167,7 @@ class UserServiceTest {
       given(userRepository.existsByNickname("newNick")).willReturn(false);
 
       // when
-      UserDto.UserResponse response = userService.changeNickname(user.getId(), request, requester);
+      UserDto.UserResponse response = userService.changeNickname(request, requester);
 
       // then
       assertThat(response.getNickname()).isEqualTo("newNick");
@@ -183,7 +187,7 @@ class UserServiceTest {
       given(userRepository.existsByNickname("duplicateNick")).willReturn(true);
 
       // when & then
-      assertThatThrownBy(() -> userService.changeNickname(user.getId(), request, requester))
+      assertThatThrownBy(() -> userService.changeNickname(request, requester))
           .isInstanceOf(DomainException.class)
           .extracting("errorCode")
           .isEqualTo(UserErrorCode.NICKNAME_ALREADY_EXISTS);
@@ -241,7 +245,7 @@ class UserServiceTest {
           .willAnswer(invocation -> invocation.getArgument(0));
 
       // when
-      UserDto.FavoriteStockResponse response = userService.addFavoriteStock(userId, stockId, requester);
+      UserDto.FavoriteStockResponse response = userService.addFavoriteStock(stockId, requester);
 
       // then
       assertThat(response.getStockId()).isEqualTo(stockId);
@@ -260,7 +264,7 @@ class UserServiceTest {
       given(interestStockRepository.findByUserIdAndStockId(userId, stockId)).willReturn(Optional.of(interestStock));
 
       // when & then
-      assertThatThrownBy(() -> userService.addFavoriteStock(userId, stockId, requester))
+      assertThatThrownBy(() -> userService.addFavoriteStock(stockId, requester))
           .isInstanceOf(DomainException.class)
           .extracting("errorCode")
           .isEqualTo(UserErrorCode.INTEREST_STOCK_ALREADY_EXISTS);
@@ -278,29 +282,12 @@ class UserServiceTest {
       given(marketClient.getStockNameByStockId(stockId)).willReturn(Optional.empty());
 
       // when & then
-      assertThatThrownBy(() -> userService.addFavoriteStock(userId, stockId, requester))
+      assertThatThrownBy(() -> userService.addFavoriteStock(stockId, requester))
           .isInstanceOf(DomainException.class)
           .extracting("errorCode")
           .isEqualTo(UserErrorCode.MARKET_DATA_NOT_FOUND);
     }
 
-    @Test
-    @DisplayName("unauthorized requester")
-    void addFavoriteStock_Fail_Unauthorized() {
-      // given
-      UUID userId = UUID.randomUUID();
-      Long stockId = 1L;
-      Requester requester = new Requester(UUID.randomUUID(), UserRole.USER);
-      given(interestStockRepository.findByUserIdAndStockId(userId, stockId)).willReturn(Optional.empty());
-      given(marketClient.getStockNameByStockId(stockId)).willReturn(Optional.of("ACME"));
-
-      // when & then
-      assertThatThrownBy(() -> userService.addFavoriteStock(userId, stockId, requester))
-          .isInstanceOf(DomainException.class)
-          .extracting("errorCode")
-          .isEqualTo(UserErrorCode.UNAUTHORIZED_INTEREST_STOCK_CREATION);
-      verify(interestStockRepository, never()).save(any(InterestStock.class));
-    }
   }
 
   @Nested
@@ -318,7 +305,7 @@ class UserServiceTest {
           .willReturn(Optional.of(interestStock));
 
       // when
-      UserDto.FavoriteStockResponse response = userService.removeFavoriteStock(userId, stockId, requester);
+      UserDto.FavoriteStockResponse response = userService.removeFavoriteStock(stockId, requester);
 
       // then
       assertThat(response.getStockId()).isEqualTo(stockId);
@@ -335,30 +322,12 @@ class UserServiceTest {
       given(interestStockRepository.findByUserIdAndStockId(userId, stockId)).willReturn(Optional.empty());
 
       // when & then
-      assertThatThrownBy(() -> userService.removeFavoriteStock(userId, stockId, requester))
+      assertThatThrownBy(() -> userService.removeFavoriteStock(stockId, requester))
           .isInstanceOf(DomainException.class)
           .extracting("errorCode")
           .isEqualTo(UserErrorCode.INTEREST_STOCK_NOT_FOUND);
     }
 
-    @Test
-    @DisplayName("unauthorized requester")
-    void removeFavoriteStock_Fail_Unauthorized() {
-      // given
-      UUID userId = UUID.randomUUID();
-      Long stockId = 1L;
-      Requester requester = new Requester(UUID.randomUUID(), UserRole.USER);
-      InterestStock interestStock = InterestStock.create(userId, stockId, "ACME");
-      given(interestStockRepository.findByUserIdAndStockId(userId, stockId))
-          .willReturn(Optional.of(interestStock));
-
-      // when & then
-      assertThatThrownBy(() -> userService.removeFavoriteStock(userId, stockId, requester))
-          .isInstanceOf(DomainException.class)
-          .extracting("errorCode")
-          .isEqualTo(UserErrorCode.UNAUTHORIZED_INTEREST_STOCK_DELETION);
-      verify(interestStockRepository, never()).deleteByUserIdAndStockId(any(UUID.class), anyLong());
-    }
   }
 
   @Nested

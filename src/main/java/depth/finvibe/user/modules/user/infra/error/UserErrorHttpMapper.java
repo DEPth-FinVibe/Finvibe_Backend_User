@@ -38,7 +38,8 @@ public class UserErrorHttpMapper implements DomainErrorHttpMapper {
 
       case USER_NOT_FOUND,
           INTEREST_STOCK_NOT_FOUND,
-          MARKET_DATA_NOT_FOUND -> HttpStatus.NOT_FOUND;
+          MARKET_DATA_NOT_FOUND,
+          GAMIFICATION_DATA_NOT_FOUND -> HttpStatus.NOT_FOUND;
 
       case EMAIL_ALREADY_EXISTS,
           LOGIN_ID_ALREADY_EXISTS,

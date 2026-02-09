@@ -20,3 +20,7 @@ jwt:
 app:
   oauth2:
     base-url: ${OAUTH_REDIRECT_URL:http://localhost:3000/oauth/callback}
+
+external:
+  gamification:
+    base-url: ${GAMIFICATION_BASE_URL:https://finvibe.com}

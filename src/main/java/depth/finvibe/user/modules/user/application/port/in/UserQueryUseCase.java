@@ -17,4 +17,6 @@ public interface UserQueryUseCase {
     UserDto.DuplicateCheckResponse checkNicknameDuplicate(String nickname);
 
     String getNickname(UUID userId);
+
+    UserDto.MemberProfileResponse getMemberProfile(UUID userId);
 }
