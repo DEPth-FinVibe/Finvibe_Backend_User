@@ -3,19 +3,31 @@ package depth.finvibe.user.modules.user.infra.client;
 import depth.finvibe.user.modules.user.application.port.out.MarketClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
 public class MarketClientImpl implements MarketClient {
-
-    private final HttpMarketClient httpMarketClient;
+    private final RestClient restClient = RestClient.builder()
+            .baseUrl("http://investment")
+            .build();
 
     @Override
     public Optional<String> getStockNameByStockId(Long stockId) {
-        return Optional.ofNullable(
-                httpMarketClient.getStockNameById(stockId)
-        );
+        try {
+            String response = restClient.get()
+                    .uri("/internal/market/stocks/{stockId}/name", stockId)
+                    .retrieve()
+                    .body(String.class);
+
+            return Optional.ofNullable(response);
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 }
