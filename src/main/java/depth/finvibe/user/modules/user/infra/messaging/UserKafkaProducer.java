@@ -20,7 +20,7 @@ public class UserKafkaProducer implements UserEventPublisher {
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private static final String USER_SIGNUP_TOPIC = "user.signup.v1";
     private static final String USER_SIGNIN_TOPIC = "user.signin.v1";
-    private static final String USER_METRIC_TOPIC = "user.metric.updated.v1";
+    private static final String USER_METRIC_TOPIC = "gamification.update-user-metric.v1";
 
     @Override
     public void publishUserSignUpEvent(UUID userId) {
