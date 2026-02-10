@@ -3,11 +3,13 @@ package depth.finvibe.user.modules.user.infra.messaging;
 import depth.finvibe.user.modules.user.application.port.out.UserEventPublisher;
 import depth.finvibe.user.shared.dto.SignInEvent;
 import depth.finvibe.user.shared.dto.SignUpEvent;
+import depth.finvibe.user.shared.dto.UserMetricUpdatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Slf4j
@@ -18,6 +20,7 @@ public class UserKafkaProducer implements UserEventPublisher {
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private static final String USER_SIGNUP_TOPIC = "user.signup.v1";
     private static final String USER_SIGNIN_TOPIC = "user.signin.v1";
+    private static final String USER_METRIC_TOPIC = "user.metric.updated.v1";
 
     @Override
     public void publishUserSignUpEvent(UUID userId) {
@@ -44,6 +47,23 @@ public class UserKafkaProducer implements UserEventPublisher {
     private SignInEvent createSignInEvent(UUID userId) {
         return SignInEvent.builder()
                 .userId(userId.toString())
+                .build();
+    }
+
+    @Override
+    public void publishUserMetricEvent(UUID userId, String eventType, Double delta, Instant occurredAt) {
+        log.info("Publishing user metric event for userId: {}, eventType: {}", userId, eventType);
+
+        UserMetricUpdatedEvent metricEvent = createUserMetricEvent(userId, eventType, delta, occurredAt);
+        kafkaTemplate.send(USER_METRIC_TOPIC, userId.toString(), metricEvent);
+    }
+
+    private UserMetricUpdatedEvent createUserMetricEvent(UUID userId, String eventType, Double delta, Instant occurredAt) {
+        return UserMetricUpdatedEvent.builder()
+                .userId(userId.toString())
+                .eventType(eventType)
+                .delta(delta)
+                .occurredAt(occurredAt != null ? occurredAt : Instant.now())
                 .build();
     }
 }

@@ -1,5 +1,6 @@
 package depth.finvibe.user.modules.user.application.service;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -8,8 +9,10 @@ import java.util.stream.Collectors;
 import depth.finvibe.user.modules.user.application.port.out.InterestStockRepository;
 import depth.finvibe.user.modules.user.application.port.out.GamificationClient;
 import depth.finvibe.user.modules.user.application.port.out.MarketClient;
+import depth.finvibe.user.modules.user.application.port.out.UserEventPublisher;
 import depth.finvibe.user.modules.user.application.port.out.UserRepository;
 import depth.finvibe.user.modules.user.domain.vo.*;
+import depth.finvibe.user.modules.user.infra.persistence.DailyLoginChecker;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -35,6 +38,8 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
     private final GamificationClient gamificationClient;
     private final MarketClient marketClient;
     private final PasswordEncoder passwordEncoder;
+    private final DailyLoginChecker dailyLoginChecker;
+    private final UserEventPublisher userEventPublisher;
 
     @Override
     @Transactional
@@ -80,7 +85,26 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
 
         user.validateActive();
 
+        // 당일 첫 로그인인 경우 LOGIN 메트릭 이벤트 발행
+        checkAndPublishDailyLogin(userId);
+
         return UserDto.UserResponse.from(user);
+    }
+
+    /**
+     * 당일 첫 로그인인지 확인하고 메트릭 이벤트를 발행합니다.
+     */
+    private void checkAndPublishDailyLogin(UUID userId) {
+        boolean isFirstLoginToday = dailyLoginChecker.checkAndMarkDailyLogin(userId);
+
+        if (isFirstLoginToday) {
+            userEventPublisher.publishUserMetricEvent(
+                    userId,
+                    "LOGIN",
+                    1.0,
+                    Instant.now()
+            );
+        }
     }
 
     @Override
