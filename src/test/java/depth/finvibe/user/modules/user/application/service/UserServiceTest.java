@@ -26,9 +26,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import depth.finvibe.user.modules.user.application.port.out.InterestStockRepository;
 import depth.finvibe.user.modules.user.application.port.out.GamificationClient;
 import depth.finvibe.user.modules.user.application.port.out.MarketClient;
+import depth.finvibe.user.modules.user.application.port.out.UserEventPublisher;
 import depth.finvibe.user.modules.user.application.port.out.UserRepository;
 import depth.finvibe.user.modules.user.domain.InterestStock;
 import depth.finvibe.user.modules.user.domain.User;
+import depth.finvibe.user.modules.user.infra.persistence.DailyLoginChecker;
 import depth.finvibe.user.modules.user.domain.enums.UserRole;
 import depth.finvibe.user.modules.user.domain.error.UserErrorCode;
 import depth.finvibe.user.modules.user.domain.vo.Email;
@@ -60,6 +62,12 @@ class UserServiceTest {
 
   @Mock
   private PasswordEncoder passwordEncoder;
+
+  @Mock
+  private DailyLoginChecker dailyLoginChecker;
+
+  @Mock
+  private UserEventPublisher userEventPublisher;
 
   @Nested
   @DisplayName("update")

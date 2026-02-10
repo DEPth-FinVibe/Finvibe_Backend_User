@@ -78,7 +78,7 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public UserDto.UserResponse getMe(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new DomainException(UserErrorCode.USER_NOT_FOUND));
